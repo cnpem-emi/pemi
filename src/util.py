@@ -1,0 +1,21 @@
+from PyQt5 import QtWidgets
+
+
+class QVersionLabel(QtWidgets.QLabel):
+    def __init__(self, parent, prefix=""):
+        super(QtWidgets.QLabel, self).__init__(parent)
+        self.prefix = prefix
+
+    def setVersionText(self, text):
+        self.setText(f"{self.prefix}: {text}")
+
+
+def show_message(title: str, message: str, details: str = ""):
+    msg = QtWidgets.QMessageBox()
+    msg.setWindowTitle(title)
+    msg.setText(message)
+
+    if details:
+        msg.setDetailedText(details)
+
+    msg.exec_()
