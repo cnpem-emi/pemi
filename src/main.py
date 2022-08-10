@@ -4,16 +4,20 @@ from socket import timeout as SocketTimeout
 import sys
 from consts import LOCK_ICON, UNLOCK_ICON
 from lock import PasswordDialog
+from mdi import MdiWidget
 from param_bank import ParamBankWidget
 from util import QVersionLabel, show_message
 
 
 class Ui(QtWidgets.QMainWindow):
+    load_done = QtCore.pyqtSignal()
+
     def __init__(self):
         super(Ui, self).__init__()
         uic.loadUi("src/ui/main.ui", self)
         self._set_tabs()
         self.connectButton.clicked.connect(self.connect)
+        self.pydrs = None
 
         self.pydrsVersionLabel = QVersionLabel(self, "PyDRS")
         self.firmwareVersionLabel = QVersionLabel(self, "ARM/DSP")
@@ -34,7 +38,6 @@ class Ui(QtWidgets.QMainWindow):
 
         self.valid_slaves = []
         self.show()
-        self.pydrs = None
 
     @property
     def locked(self) -> bool:
@@ -68,6 +71,7 @@ class Ui(QtWidgets.QMainWindow):
             self.addressCombobox.addItems([v["name"] for v in self.valid_slaves])
             self._get_ps_info()
             self.firmwareVersionLabel.setVersionText(self.pydrs.read_udc_version()["arm"])
+            self.load_done.emit()
         except SocketTimeout:
             show_message("Error", f"Could not connect to {self.ipLineEdit.text()}.")
 
@@ -80,7 +84,6 @@ class Ui(QtWidgets.QMainWindow):
                     param = self.pydrs.get_param("RS485_Address", n)
                     if param != param:
                         names = self.pydrs.get_ps_name().split(" / ")
-                        print(names)
 
                         for i in range(0, len(self.valid_slaves)):
                             try:
@@ -117,7 +120,11 @@ class Ui(QtWidgets.QMainWindow):
 
     def _set_tabs(self):
         self.param_bank_tab = ParamBankWidget(self)
-        self.tabs.addTab(self.param_bank_tab, "Parameter Banks")
+        self.dsp_bank_tab = ParamBankWidget(self, dsp=True)
+        self.mdi_tab = MdiWidget(self)
+        self.tabs.addTab(self.param_bank_tab, "Parameter Bank")
+        self.tabs.addTab(self.dsp_bank_tab, "DSP Module Bank")
+        self.tabs.addTab(self.mdi_tab, "View Variables")
 
     @QtCore.pyqtSlot()
     def lock(self):

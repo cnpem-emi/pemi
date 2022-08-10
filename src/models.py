@@ -1,10 +1,12 @@
 from PyQt5 import QtCore
 
 
-class TableModel(QtCore.QAbstractTableModel):
+class DictTableModel(QtCore.QAbstractTableModel):
     def __init__(self, data=[[]], parent=None):
         super().__init__(parent)
         self.data = data
+
+        self.highlighted = {}
 
     def headerData(self, section: int, orientation: QtCore.Qt.Orientation, role: int):
         if role == QtCore.Qt.DisplayRole:
@@ -14,13 +16,23 @@ class TableModel(QtCore.QAbstractTableModel):
                 return "Row " + str(section)
 
     def columnCount(self, parent=None):
-        return len(self.data[0])
+        return len(self.data[list(self.data.keys())[0]]) + 1
 
     def rowCount(self, parent=None):
-        return len(self.data)
+        return len(list(self.data.keys()))
 
     def data(self, index: QtCore.QModelIndex, role: int):
+        row = index.row()
+        col = index.column()
+        key = list(self.data.keys())[row]
+
+        if role == QtCore.Qt.BackgroundRole:
+            try:
+                return self.data[key]
+            except KeyError:
+                return
         if role == QtCore.Qt.DisplayRole:
-            row = index.row()
-            col = index.column()
-            return str(self.data[row][col])
+            if col == 0:
+                return key
+            else:
+                return str(self.data[key][col - 1])

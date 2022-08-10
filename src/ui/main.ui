@@ -13,6 +13,9 @@
   <property name="windowTitle">
    <string>PyDRS Enabled Maintenance Interface</string>
   </property>
+  <property name="dockNestingEnabled">
+   <bool>false</bool>
+  </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QGridLayout" name="gridLayout">
     <item row="1" column="0">
@@ -101,19 +104,11 @@
          <enum>QTabWidget::Rounded</enum>
         </property>
         <property name="currentIndex">
-         <number>1</number>
+         <number>-1</number>
         </property>
-        <widget class="QWidget" name="viewTab">
-         <attribute name="title">
-          <string>View</string>
-         </attribute>
-         <layout class="QGridLayout" name="gridLayout_4"/>
-        </widget>
-        <widget class="QWidget" name="tab_3">
-         <attribute name="title">
-          <string>Page</string>
-         </attribute>
-        </widget>
+        <property name="tabBarAutoHide">
+         <bool>false</bool>
+        </property>
        </widget>
       </item>
      </layout>
