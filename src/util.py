@@ -19,3 +19,17 @@ def show_message(title: str, message: str, details: str = ""):
         msg.setDetailedText(details)
 
     msg.exec_()
+
+
+def are_parameters_equal(a: list, b: list, error=0.0001) -> bool:
+    if a == b:
+        return True
+
+    if isinstance(a, str) and isinstance(b, str):
+        return False
+
+    for i, val in enumerate(a):
+        if abs(val - b[i]) > error:
+            return False
+
+    return True

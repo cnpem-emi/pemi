@@ -1,26 +1,37 @@
 from PyQt5 import QtCore
 
 
-class TableModel(QtCore.QAbstractTableModel):
+class DictTableModel(QtCore.QAbstractTableModel):
     def __init__(self, data=[[]], parent=None):
         super().__init__(parent)
         self.data = data
+        self._headers = list(data.keys())
+
+        self.highlighted = {}
 
     def headerData(self, section: int, orientation: QtCore.Qt.Orientation, role: int):
         if role == QtCore.Qt.DisplayRole:
-            if orientation == QtCore.Qt.Horizontal:
-                return "Column " + str(section)
-            else:
-                return "Row " + str(section)
+            try:
+                return self._headers[section]
+            except IndexError:
+                return ""
 
     def columnCount(self, parent=None):
-        return len(self.data[0])
+        return 64  # Largest list returned by UDC
 
     def rowCount(self, parent=None):
-        return len(self.data)
+        return len(list(self.data.keys()))
 
     def data(self, index: QtCore.QModelIndex, role: int):
+        row = index.row()
+        col = index.column()
+        key = list(self.data.keys())[row]
+
+        if role == QtCore.Qt.BackgroundRole:
+            if key in self.highlighted:
+                return self.highlighted[key]
         if role == QtCore.Qt.DisplayRole:
-            row = index.row()
-            col = index.column()
-            return str(self.data[row][col])
+            try:
+                return str(self.data[key][col])
+            except IndexError:
+                return ""
