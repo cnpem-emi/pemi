@@ -10,9 +10,6 @@ class BasicCommThread(QtCore.QThread):
         self.pydrs = pydrs
         self.mutex = mutex
 
-    def __del__(self):
-        self.wait()
-
     def run(self):
         self.finished.emit()
 
@@ -47,10 +44,17 @@ class FetchAddressesThread(BasicCommThread):
             except validation.SerialErrPckgLen:
                 pass
 
+        self.pydrs.slave_addr = valid_slaves[0]["addr"]
         names = self.pydrs.get_ps_name().split(" / ")
         for i in range(0, len(valid_slaves)):
             try:
-                valid_slaves[i]["name"] = f"{names[i]} ({valid_slaves[i]['addr']})"
+                if i >= len(names):
+                    self.pydrs.slave_addr = valid_slaves[i]["addr"]
+                    names += self.pydrs.get_ps_name().split(" / ")
+
+                valid_slaves[i][
+                    "name"
+                ] = f"{names[i] if names[i] not in names[0:i] else 'Unknown'} ({valid_slaves[i]['addr']})"
             except IndexError:
                 valid_slaves[i]["name"] += f" ({valid_slaves[i]['addr']})"
         self.mutex.unlock()

@@ -142,7 +142,7 @@
         <property name="title">
          <string>Power Supply</string>
         </property>
-        <layout class="QHBoxLayout" name="horizontalLayout_3" stretch="1,4,1,4,1,1,0,1,4,1">
+        <layout class="QHBoxLayout" name="psLayout" stretch="1,4,1,4,1,1,0,1,4,1">
          <item>
           <widget class="QLabel" name="label_6">
            <property name="font">
@@ -236,10 +236,6 @@
           <widget class="QPushButton" name="lockButton">
            <property name="text">
             <string/>
-           </property>
-           <property name="icon">
-            <iconset>
-             <normaloff>res/lock-open.png</normaloff>res/lock-open.png</iconset>
            </property>
           </widget>
          </item>

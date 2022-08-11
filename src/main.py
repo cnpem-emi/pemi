@@ -1,14 +1,13 @@
-from PyQt5 import QtWidgets, uic, QtGui, QtCore
-from pydrs import pydrs
-from pydrs import __version__ as pydrs_version
+from PyQt5 import QtWidgets, uic, QtCore
+import pydrs
 from socket import timeout as SocketTimeout
 import sys
-from consts import LOCK_ICON, NO_LAN_ICON, UNLOCK_ICON
 from threads import FetchAddressesThread, FetchDataThread
 from lock import PasswordDialog
 from mdi import MdiWidget
 from param_bank import ParamBankWidget
 from util import QVersionLabel, show_message
+import qtawesome as qta
 
 
 class Ui(QtWidgets.QMainWindow):
@@ -31,9 +30,8 @@ class Ui(QtWidgets.QMainWindow):
         self.pass_dialog = PasswordDialog(self)
         self.pass_dialog.lock_changed.connect(self.lock)
 
-        self.pydrsVersionLabel.setVersionText(f"v{pydrs_version}")
+        self.pydrsVersionLabel.setVersionText(f"v{pydrs.__version__}")
         self.firmwareVersionLabel.setVersionText("?")
-        self.commsProgress.setPixmap(QtGui.QPixmap(NO_LAN_ICON))
 
         self.statusbar.addPermanentWidget(self.pydrsVersionLabel)
         self.statusbar.addPermanentWidget(self.firmwareVersionLabel)
@@ -43,6 +41,7 @@ class Ui(QtWidgets.QMainWindow):
         self.addressCombobox.currentIndexChanged.connect(self._update_ps)
 
         self.valid_slaves = []
+        self.set_icons()
 
         self.mutex = QtCore.QMutex()
 
@@ -56,9 +55,22 @@ class Ui(QtWidgets.QMainWindow):
     def locked(self, lock: bool):
         self._locked = lock
 
-        lock_icon = QtGui.QIcon(LOCK_ICON if lock == 0 else UNLOCK_ICON)
+        lock_icon = qta.icon("fa5s.lock") if lock == 0 else qta.icon("fa5s.lock-open")
         self.lockLabel.setText("Locked" if lock else "Unlocked")
         self.lockButton.setIcon(lock_icon)
+
+    @property
+    def state(self) -> str:
+        return self._state
+
+    @state.setter
+    def state(self, state: str):
+        self._state = state
+        self.stateLabel.setText(state)
+        if pydrs.consts.common.list_op_mode.index(state) > 2:
+            self.slowRefIcon.setIcon(qta.icon("fa5s.circle", color="green"))
+        else:
+            self.slowRefIcon.setIcon(qta.icon("fa5s.circle", color="red"))
 
     @QtCore.pyqtSlot()
     def connect(self):
@@ -99,7 +111,7 @@ class Ui(QtWidgets.QMainWindow):
             self.detailsGroupBox.setEnabled(True)
 
             self.psModelLabel.setText(info["ps_model"])
-            self.stateLabel.setText(info["state"])
+            self.state = info["state"]
             self.firmwareVersionLabel.setVersionText(info["version"])
             self.locked = not info["unlocked"]
         except pydrs.validation.SerialErrPckgLen as e:
@@ -120,6 +132,12 @@ class Ui(QtWidgets.QMainWindow):
     @QtCore.pyqtSlot()
     def lock(self):
         self.locked = not self.locked
+
+    def set_icons(self):
+        self.lockButton.setIcon(qta.icon("fa5s.lock"))
+
+        self.slowRefIcon = qta.IconWidget("fa5s.circle")
+        self.psLayout.insertWidget(3, self.slowRefIcon)
 
 
 app = QtWidgets.QApplication(sys.argv)

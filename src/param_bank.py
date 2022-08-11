@@ -1,6 +1,7 @@
 from PyQt5 import QtCore, QtWidgets, uic, QtGui
 from util import are_parameters_equal
 from threads import FetchParamThread
+import qtawesome as qta
 
 from models import DictTableModel
 
@@ -23,6 +24,8 @@ class ParamBankWidget(QtWidgets.QWidget):
         self.saveFileButton.clicked.connect(self.save_to_file)
         self.saveButton.clicked.connect(self.save_changes)
         self.parent.load_done.connect(self.get_parent_info)
+
+        self.set_icons()
 
         self.read_params = []
 
@@ -124,3 +127,9 @@ class ParamBankWidget(QtWidgets.QWidget):
         self.data_thread.finished.connect(self.update_params)
 
         self.data_thread.start()
+
+    def set_icons(self):
+        self.saveFileButton.setIcon(qta.icon("fa5s.save"))
+        self.refreshButton.setIcon(qta.icon("fa.rotate-right"))
+        self.editButton.setIcon(qta.icon("fa5s.arrow-left"))
+        self.applyButton.setIcon(qta.icon("fa5s.arrow-right"))
