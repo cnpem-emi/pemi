@@ -1,6 +1,7 @@
-from PyQt5 import QtCore, QtWidgets, uic
+from PyQt5 import QtCore, QtWidgets, uic, QtGui
+from util import are_parameters_equal
+from threads import FetchParamThread
 
-# import pydrs
 from models import DictTableModel
 
 
@@ -12,13 +13,15 @@ class ParamBankWidget(QtWidgets.QWidget):
         uic.loadUi("src/ui/param.ui", self)
         self.parent = parent
         self.dsp = dsp
+        self.data_thread: FetchParamThread = None
 
         self.openParamBankButton.clicked.connect(self.show_dialog)
         self.clearPBankButton.clicked.connect(self.clear_file)
-        self.refreshButton.clicked.connect(self.update_params)
 
         self.applyButton.clicked.connect(self.apply_changes)
-        self.parent.load_done.connect(self.update_params)
+        self.saveFileButton.clicked.connect(self.save_to_file)
+        self.saveButton.clicked.connect(self.save_changes)
+        self.parent.load_done.connect(self.get_parent_info)
 
         self.read_params = []
 
@@ -32,23 +35,29 @@ class ParamBankWidget(QtWidgets.QWidget):
         self._param_file_path = path
 
     @QtCore.pyqtSlot()
+    def save_to_file(self):
+        file_dialog = QtWidgets.QFileDialog()
+        file = QtWidgets.QFileDialog.getSaveFileName(
+            file_dialog, "Save Parameter Bank", filter="CSV Files (*.csv)"
+        )
+        self.parent.pydrs.store_param_bank_csv(self.read_params, file[0])
+
+    @QtCore.pyqtSlot()
     def show_dialog(self):
         file_dialog = QtWidgets.QFileDialog()
         file = QtWidgets.QFileDialog.getOpenFileName(
             file_dialog, "Open Parameter Bank", filter="CSV Files (*.csv)"
         )
         write_values = self.read_csv_file(file[0])
+        model = DictTableModel(write_values)
 
         for key, vals in write_values.items():
             try:
-                if vals != self.read_params[key]:
-                    print(key, vals, self.read_params[key])
-                # if parsed_values[vals[0]] != self.read_params[vals[0]]:
-                #    parsed_values[vals[0] = QtGui.QColor(QtCore.Qt.green)
+                if not are_parameters_equal(vals, self.read_params[key]):
+                    model.highlighted[key] = QtGui.QColor(QtCore.Qt.yellow)
             except KeyError:
                 pass
 
-        model = DictTableModel(write_values)
         self.param_file_path = file[0]
         self.paramBankTable.setModel(model)
         self.paramBankTable.resizeColumnsToContents()
@@ -84,20 +93,27 @@ class ParamBankWidget(QtWidgets.QWidget):
     @QtCore.pyqtSlot()
     def save_changes(self):
         if self.dsp:
-            pass
+            save_func = self.parent.pydrs.save_dsp_modules_eeprom
         else:
-            pass
+            save_func = self.parent.pydrs.save_param_bank
 
-    @QtCore.pyqtSlot()
-    def update_params(self):
-        if self.dsp:
-            dsp = {}
-            for key, val in self.parent.pydrs.get_dsp_modules_bank(print_modules=False).items():
-                dsp[key] = val["coeffs"]
-            self.read_params = dsp
-        else:
-            self.read_params = self.parent.pydrs.get_param_bank(print_modules=False)
+        if self.bidCheckbox.isChecked():
+            save_func(1)
+        if self.eepromCheckbox.isChecked():
+            save_func(2)
 
+    @QtCore.pyqtSlot(dict)
+    def update_params(self, params):
+        self.read_params = params
         table = DictTableModel(self.read_params)
         self.paramsTable.setModel(table)
         self.paramsTable.resizeColumnsToContents()
+
+    @QtCore.pyqtSlot()
+    def get_parent_info(self):
+        self.data_thread = FetchParamThread(self.parent.pydrs, self.dsp, self.parent.mutex)
+
+        self.refreshButton.clicked.connect(self.data_thread.start)
+        self.data_thread.finished.connect(self.update_params)
+
+        self.data_thread.start()

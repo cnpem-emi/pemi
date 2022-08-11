@@ -5,18 +5,19 @@ class DictTableModel(QtCore.QAbstractTableModel):
     def __init__(self, data=[[]], parent=None):
         super().__init__(parent)
         self.data = data
+        self._headers = list(data.keys())
 
         self.highlighted = {}
 
     def headerData(self, section: int, orientation: QtCore.Qt.Orientation, role: int):
         if role == QtCore.Qt.DisplayRole:
-            if orientation == QtCore.Qt.Horizontal:
-                return "Column " + str(section)
-            else:
-                return "Row " + str(section)
+            try:
+                return self._headers[section]
+            except IndexError:
+                return ""
 
     def columnCount(self, parent=None):
-        return len(self.data[list(self.data.keys())[0]]) + 1
+        return 64  # Largest list returned by UDC
 
     def rowCount(self, parent=None):
         return len(list(self.data.keys()))
@@ -27,12 +28,10 @@ class DictTableModel(QtCore.QAbstractTableModel):
         key = list(self.data.keys())[row]
 
         if role == QtCore.Qt.BackgroundRole:
-            try:
-                return self.data[key]
-            except KeyError:
-                return
+            if key in self.highlighted:
+                return self.highlighted[key]
         if role == QtCore.Qt.DisplayRole:
-            if col == 0:
-                return key
-            else:
-                return str(self.data[key][col - 1])
+            try:
+                return str(self.data[key][col])
+            except IndexError:
+                return ""
