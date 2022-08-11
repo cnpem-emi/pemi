@@ -19,6 +19,7 @@ class ParamBankWidget(QtWidgets.QWidget):
         self.clearPBankButton.clicked.connect(self.clear_file)
 
         self.applyButton.clicked.connect(self.apply_changes)
+        self.loadButton.clicked.connect(self.load_to_ram)
         self.saveFileButton.clicked.connect(self.save_to_file)
         self.saveButton.clicked.connect(self.save_changes)
         self.parent.load_done.connect(self.get_parent_info)
@@ -84,11 +85,9 @@ class ParamBankWidget(QtWidgets.QWidget):
     def apply_changes(self):
         if self.param_file_path:
             if self.dsp:
-                pass
-                # self.parent.pydrs.
+                self.parent.pydrs.set_dsp_modules_bank(self.param_file_path)
             else:
-                pass
-                # self.parent.pydrs.set_param_bank(self.param_file_path)
+                self.parent.pydrs.set_param_bank(self.param_file_path)
 
     @QtCore.pyqtSlot()
     def save_changes(self):
@@ -108,6 +107,14 @@ class ParamBankWidget(QtWidgets.QWidget):
         table = DictTableModel(self.read_params)
         self.paramsTable.setModel(table)
         self.paramsTable.resizeColumnsToContents()
+
+    @QtCore.pyqtSlot()
+    def load_to_ram(self):
+        mem_type = 1 if self.bidLoadRadio.isChecked() else 2
+        if self.dsp:
+            self.parent.pydrs.load_param_bank(mem_type)
+        else:
+            self.parent.pydrs.load_dsp_modules_eeprom(mem_type)
 
     @QtCore.pyqtSlot()
     def get_parent_info(self):
