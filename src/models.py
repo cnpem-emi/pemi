@@ -1,8 +1,8 @@
-from PyQt5 import QtCore
+from PyQt5 import QtCore, QtGui
 
 
 class DictTableModel(QtCore.QAbstractTableModel):
-    def __init__(self, data=[[]], parent=None):
+    def __init__(self, data={}, parent=None):
         super().__init__(parent)
         self.data = data
         self._headers = list(data.keys())
@@ -35,3 +35,16 @@ class DictTableModel(QtCore.QAbstractTableModel):
                 return str(self.data[key][col])
             except IndexError:
                 return ""
+
+
+class ListModel(QtGui.QStandardItemModel):
+    def __init__(self, data=[]):
+        super().__init__()
+        print(data)
+        for i in data:
+            self.appendRow(QtGui.QStandardItem(i))
+
+    def setData(self, data):
+        self.clear()
+        for i in data:
+            self.appendRow(QtGui.QStandardItem(i))

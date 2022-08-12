@@ -126,8 +126,6 @@ class ParamBankWidget(QtWidgets.QWidget):
         self.refreshButton.clicked.connect(self.data_thread.start)
         self.data_thread.finished.connect(self.update_params)
 
-        self.data_thread.start()
-
     def set_icons(self):
         self.saveFileButton.setIcon(qta.icon("fa5s.save"))
         self.refreshButton.setIcon(qta.icon("fa.rotate-right"))
