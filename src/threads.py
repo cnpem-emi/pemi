@@ -1,5 +1,6 @@
 from PyQt5 import QtCore
 from pydrs import pydrs, validation
+from consts import MON_VARS
 
 from util import safe_pydrs
 
@@ -88,4 +89,6 @@ class FetchSpecificData(BasicCommThread):
     def run(self):
         with safe_pydrs(self.pydrs, self.mutex, self.addr) as drs:
             info = getattr(drs, f"read_vars_{self.ps_model.lower()}")()
+            info["mon"] = info[MON_VARS[self.ps_model]]
+            print(info)
             self.finished.emit(info)

@@ -22,6 +22,16 @@ class BasicInfoWidget(QtWidgets.QDialog):
         self.ps_thread = FetchSpecificData(self.parent.pydrs, self.parent.mutex, self.addr)
         self.ps_thread.finished.connect(self._save_ps_info)
 
+        with safe_pydrs(self.pydrs, self.parent.mutex, self.addr) as pydrs:
+            print("AAAAAAAAAAAa")
+            info = pydrs.read_vars_common()
+            self.model = info["ps_model"]
+            set_vals = info["setpoint"].split(" ")
+            print(set_vals)
+            self.setpointBox.setValue(float(set_vals[0]))
+            self.setpointBox.setSuffix(" " + set_vals[1])
+            self.ps_thread.ps_model = self.model
+
         self.locked = False
         self.pass_dialog = PasswordDialog(self)
         self.pass_dialog.lock_changed.connect(self.lock)
@@ -31,6 +41,7 @@ class BasicInfoWidget(QtWidgets.QDialog):
 
         self.resetInterlocksButton.clicked.connect(self._reset_ilocks)
         self.powerButton.clicked.connect(self._toggle_power)
+        self.powerButton.setIcon(qta.icon("fa5s.power-off"))
         self.loopButton.clicked.connect(self._toggle_loop)
 
         self.slowRefIcon = qta.IconWidget("fa5s.circle")
@@ -39,19 +50,6 @@ class BasicInfoWidget(QtWidgets.QDialog):
         self._hard_ilock_model = ListModel()
         self._soft_ilock_model = ListModel()
         self._alarm_model = ListModel()
-
-    @QtCore.pyqtSlot()
-    def _ps_changed(self):
-        with safe_pydrs(self.pydrs, self.parent.mutex, self.addr) as pydrs:
-            info = pydrs.read_vars_common()
-            self.model = info["ps_model"]
-            self.state = info["state"]
-            self.loop = info["loop_state"] == "Closed Loop"
-            self.setpointBox.setValue(float(info["setpoint"].split(" ")[0]))
-            self.power = pydrs.consts.common.list_op_mode.index(self.state) > 2
-            self.ps_thread.ps_model = self.model
-
-        self.load_info()
 
     @QtCore.pyqtSlot()
     def load_info(self):
@@ -64,8 +62,8 @@ class BasicInfoWidget(QtWidgets.QDialog):
         self.state = info["state"]
         self.loop = info["loop_state"] == "Closed Loop"
         self.locked = not info["unlocked"]
-        self.power = pydrs.consts.common.list_op_mode.index(self.state) > 2
         self.refLabel.setText(info["reference"])
+        self.power = pydrs.consts.common.list_op_mode.index(self.state) > 2
         self.armVerLabel.setText(info["version"]["arm"])
         self.dspVerLabel.setText(info["version"]["c28"])
 
@@ -77,7 +75,7 @@ class BasicInfoWidget(QtWidgets.QDialog):
             "soft": info["soft_interlocks"],
             "alarms": info["alarms"],
         }
-        self.currentMonLabel.setText(info["load_current"])
+        self.currentMonLabel.setText(info["mon"])
 
     @QtCore.pyqtSlot()
     def _reset_ilocks(self):

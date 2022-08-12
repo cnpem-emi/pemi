@@ -40,7 +40,6 @@ class DictTableModel(QtCore.QAbstractTableModel):
 class ListModel(QtGui.QStandardItemModel):
     def __init__(self, data=[]):
         super().__init__()
-        print(data)
         for i in data:
             self.appendRow(QtGui.QStandardItem(i))
 
