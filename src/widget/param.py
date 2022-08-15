@@ -1,5 +1,5 @@
 from PyQt5 import QtCore, QtWidgets, uic, QtGui
-from util import are_parameters_equal
+from util import are_parameters_equal, safe_pydrs
 from threads import FetchParamThread
 import qtawesome as qta
 
@@ -9,11 +9,12 @@ from models import DictTableModel
 class ParamBankWidget(QtWidgets.QWidget):
     lock_changed = QtCore.pyqtSignal()
 
-    def __init__(self, parent: QtWidgets.QMainWindow, dsp: bool = False):
+    def __init__(self, parent: QtWidgets.QMainWindow, addr: int, dsp: bool = False):
         super().__init__(parent)
         uic.loadUi("src/ui/param.ui", self)
         self.parent = parent
         self.dsp = dsp
+        self.addr = addr
         self.data_thread: FetchParamThread = None
 
         self.openParamBankButton.clicked.connect(self.show_dialog)
@@ -23,8 +24,8 @@ class ParamBankWidget(QtWidgets.QWidget):
         self.loadButton.clicked.connect(self.load_to_ram)
         self.saveFileButton.clicked.connect(self.save_to_file)
         self.saveButton.clicked.connect(self.save_changes)
-        self.parent.load_done.connect(self.get_parent_info)
 
+        self.get_parent_info()
         self.set_icons()
 
         self.read_params = []
@@ -86,23 +87,25 @@ class ParamBankWidget(QtWidgets.QWidget):
 
     @QtCore.pyqtSlot()
     def apply_changes(self):
-        if self.param_file_path:
-            if self.dsp:
-                self.parent.pydrs.set_dsp_modules_bank(self.param_file_path)
-            else:
-                self.parent.pydrs.set_param_bank(self.param_file_path)
+        with safe_pydrs(self.parent.pydrs, self.parent.mutex, self.addr) as pydrs:
+            if self.param_file_path:
+                if self.dsp:
+                    pydrs.set_dsp_modules_bank(self.param_file_path)
+                else:
+                    pydrs.set_param_bank(self.param_file_path)
 
     @QtCore.pyqtSlot()
     def save_changes(self):
-        if self.dsp:
-            save_func = self.parent.pydrs.save_dsp_modules_eeprom
-        else:
-            save_func = self.parent.pydrs.save_param_bank
+        with safe_pydrs(self.parent.pydrs, self.parent.mutex, self.addr) as pydrs:
+            if self.dsp:
+                save_func = pydrs.save_dsp_modules_eeprom
+            else:
+                save_func = pydrs.save_param_bank
 
-        if self.bidCheckbox.isChecked():
-            save_func(1)
-        if self.eepromCheckbox.isChecked():
-            save_func(2)
+            if self.bidCheckbox.isChecked():
+                save_func(1)
+            if self.eepromCheckbox.isChecked():
+                save_func(2)
 
     @QtCore.pyqtSlot(dict)
     def update_params(self, params):
@@ -114,16 +117,21 @@ class ParamBankWidget(QtWidgets.QWidget):
     @QtCore.pyqtSlot()
     def load_to_ram(self):
         mem_type = 1 if self.bidLoadRadio.isChecked() else 2
-        if self.dsp:
-            self.parent.pydrs.load_param_bank(mem_type)
-        else:
-            self.parent.pydrs.load_dsp_modules_eeprom(mem_type)
+
+        with safe_pydrs(self.parent.pydrs, self.parent.mutex, self.addr) as pydrs:
+            if self.dsp:
+                pydrs.load_param_bank(mem_type)
+            else:
+                pydrs.load_dsp_modules_eeprom(mem_type)
 
     @QtCore.pyqtSlot()
     def get_parent_info(self):
-        self.data_thread = FetchParamThread(self.parent.pydrs, self.dsp, self.parent.mutex)
+        self.data_thread = FetchParamThread(
+            self.parent.pydrs, self.parent.mutex, self.addr, self.dsp
+        )
 
         self.refreshButton.clicked.connect(self.data_thread.start)
+        self.data_thread.start()
         self.data_thread.finished.connect(self.update_params)
 
     def set_icons(self):

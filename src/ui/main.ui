@@ -135,6 +135,9 @@
    </layout>
   </widget>
   <widget class="QMenuBar" name="menubar">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="geometry">
     <rect>
      <x>0</x>
@@ -157,8 +160,14 @@
    </property>
   </widget>
   <action name="actionParams">
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
    <property name="text">
     <string>Parameter Banks</string>
+   </property>
+   <property name="visible">
+    <bool>true</bool>
    </property>
   </action>
  </widget>

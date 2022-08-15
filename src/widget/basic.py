@@ -1,6 +1,6 @@
 from PyQt5 import QtCore, QtWidgets, uic
 import pydrs
-from lock import PasswordDialog
+from dialog.lock import PasswordDialog
 from models import ListModel
 from threads import FetchDataThread, FetchSpecificData
 import qtawesome as qta
@@ -57,14 +57,13 @@ class BasicInfoWidget(QtWidgets.QDialog):
 
     @QtCore.pyqtSlot()
     def load_info(self):
-        print("AAAAAAA")
         self.data_thread.start()
         self.ps_thread.start()
 
     @QtCore.pyqtSlot(float)
     def _update_interval(self, rate: float):
         print(rate)
-        self.timer.setInterval(1/rate*1000)
+        self.timer.setInterval(1 / rate * 1000)
 
     @QtCore.pyqtSlot(dict)
     def _save_common_info(self, info: dict):
@@ -73,6 +72,7 @@ class BasicInfoWidget(QtWidgets.QDialog):
         self.loop = info["loop_state"] == "Closed Loop"
         self.locked = not info["unlocked"]
         self.refLabel.setText(info["reference"])
+        self.readbackLabel.setText(info["setpoint"])
         self.power = pydrs.consts.common.list_op_mode.index(self.state) > 2
         self.armVerLabel.setText(info["version"]["arm"])
         self.dspVerLabel.setText(info["version"]["c28"])
@@ -85,7 +85,7 @@ class BasicInfoWidget(QtWidgets.QDialog):
             "soft": info["soft_interlocks"],
             "alarms": info["alarms"],
         }
-        self.currentMonLabel.setText(info["mon"])
+        self.monLabel.setText(info["mon"])
 
     @QtCore.pyqtSlot()
     def _reset_ilocks(self):

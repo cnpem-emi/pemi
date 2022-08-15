@@ -47,7 +47,12 @@ class FetchAddressesThread(BasicCommThread):
                 except validation.SerialErrPckgLen:
                     pass
 
-            drs.slave_addr = valid_slaves[0]["addr"]
+            try:
+                drs.slave_addr = valid_slaves[0]["addr"]
+            except IndexError:
+                self.finished.emit([])
+                return
+
             names = drs.get_ps_name().split(" / ")
             for i in range(0, len(valid_slaves)):
                 try:
@@ -65,8 +70,8 @@ class FetchAddressesThread(BasicCommThread):
 
 
 class FetchParamThread(BasicCommThread):
-    def __init__(self, pydrs: pydrs.BaseDRS, is_dsp: False, mutex: QtCore.QMutex):
-        super().__init__(pydrs, mutex)
+    def __init__(self, pydrs: pydrs.BaseDRS, mutex: QtCore.QMutex, addr: int, is_dsp: bool):
+        super().__init__(pydrs, mutex, addr)
         self.is_dsp = is_dsp
 
     def run(self):

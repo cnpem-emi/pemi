@@ -327,14 +327,14 @@
            </widget>
           </item>
           <item row="1" column="1">
-           <widget class="QLabel" name="currentReadbackLabel">
+           <widget class="QLabel" name="readbackLabel">
             <property name="text">
              <string>Unknown</string>
             </property>
            </widget>
           </item>
           <item row="3" column="1">
-           <widget class="QLabel" name="currentMonLabel">
+           <widget class="QLabel" name="monLabel">
             <property name="text">
              <string>Unknown</string>
             </property>
