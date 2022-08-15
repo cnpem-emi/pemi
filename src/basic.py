@@ -15,6 +15,7 @@ class BasicInfoWidget(QtWidgets.QDialog):
         self.parent = parent
         self.pydrs = parent.pydrs
         self.addr = addr
+        self.interval = 1000
 
         self.data_thread = FetchDataThread(self.parent.pydrs, self.parent.mutex, self.addr)
         self.data_thread.finished.connect(self._save_common_info)
@@ -23,11 +24,9 @@ class BasicInfoWidget(QtWidgets.QDialog):
         self.ps_thread.finished.connect(self._save_ps_info)
 
         with safe_pydrs(self.pydrs, self.parent.mutex, self.addr) as pydrs:
-            print("AAAAAAAAAAAa")
             info = pydrs.read_vars_common()
             self.model = info["ps_model"]
             set_vals = info["setpoint"].split(" ")
-            print(set_vals)
             self.setpointBox.setValue(float(set_vals[0]))
             self.setpointBox.setSuffix(" " + set_vals[1])
             self.ps_thread.ps_model = self.model
@@ -43,9 +42,14 @@ class BasicInfoWidget(QtWidgets.QDialog):
         self.powerButton.clicked.connect(self._toggle_power)
         self.powerButton.setIcon(qta.icon("fa5s.power-off"))
         self.loopButton.clicked.connect(self._toggle_loop)
+        self.refreshBox.valueChanged.connect(self._update_interval)
 
         self.slowRefIcon = qta.IconWidget("fa5s.circle")
         self.psLayout.insertWidget(3, self.slowRefIcon)
+
+        self.timer = QtCore.QTimer(self)
+        self.timer.timeout.connect(self.load_info)
+        self.timer.start(self.interval)
 
         self._hard_ilock_model = ListModel()
         self._soft_ilock_model = ListModel()
@@ -53,8 +57,14 @@ class BasicInfoWidget(QtWidgets.QDialog):
 
     @QtCore.pyqtSlot()
     def load_info(self):
+        print("AAAAAAA")
         self.data_thread.start()
         self.ps_thread.start()
+
+    @QtCore.pyqtSlot(float)
+    def _update_interval(self, rate: float):
+        print(rate)
+        self.timer.setInterval(1/rate*1000)
 
     @QtCore.pyqtSlot(dict)
     def _save_common_info(self, info: dict):
