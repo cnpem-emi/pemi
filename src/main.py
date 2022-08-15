@@ -94,7 +94,7 @@ class Ui(QtWidgets.QMainWindow):
         self.valid_slaves = addrs
         self.addressBox.clear()
         self.addressBox.addItems([v["name"] for v in addrs])
-        self.addrs_changed.emit(addrs)
+        self.addrs_updated.emit(addrs)
 
     @QtCore.pyqtSlot(int)
     def _switch_address(self, index: int):

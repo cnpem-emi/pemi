@@ -43,6 +43,7 @@ class BasicInfoWidget(QtWidgets.QDialog):
         self.powerButton.setIcon(qta.icon("fa5s.power-off"))
         self.loopButton.clicked.connect(self._toggle_loop)
         self.refreshBox.valueChanged.connect(self._update_interval)
+        self.setpointButton.clicked.connect(self._set_setpoint)
 
         self.slowRefIcon = qta.IconWidget("fa5s.circle")
         self.psLayout.insertWidget(3, self.slowRefIcon)
@@ -196,3 +197,8 @@ class BasicInfoWidget(QtWidgets.QDialog):
         self.softLockView.setModel(self._soft_ilock_model)
         self.hardLockView.setModel(self._hard_ilock_model)
         self.alarmView.setModel(self._alarm_model)
+
+    @QtCore.pyqtSlot()
+    def _set_setpoint(self):
+        self.pydrs.set_slowref(self.setpointBox.value())
+        self.load_info()
