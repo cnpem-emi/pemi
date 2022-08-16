@@ -1,17 +1,18 @@
 from PyQt5 import QtCore, QtWidgets, uic
 import pydrs
-from dialog.lock import PasswordDialog
-from models import ListModel
-from threads import FetchDataThread, FetchSpecificData
+from ..dialog.lock import PasswordDialog
+from ..models import ListModel
+from ..threads import FetchDataThread, FetchSpecificData
 import qtawesome as qta
 
-from util import safe_pydrs
+from pemi.util import safe_pydrs
+from ..consts import BASIC_UI
 
 
 class BasicInfoWidget(QtWidgets.QDialog):
     def __init__(self, parent: QtWidgets.QMainWindow, addr: int):
         super().__init__(parent)
-        uic.loadUi("src/ui/basic.ui", self)
+        uic.loadUi(BASIC_UI, self)
         self.parent = parent
         self.pydrs = parent.pydrs
         self.addr = addr
@@ -58,12 +59,12 @@ class BasicInfoWidget(QtWidgets.QDialog):
 
     @QtCore.pyqtSlot()
     def load_info(self):
+        print(self.addr)
         self.data_thread.start()
         self.ps_thread.start()
 
     @QtCore.pyqtSlot(float)
     def _update_interval(self, rate: float):
-        print(rate)
         self.timer.setInterval(1 / rate * 1000)
 
     @QtCore.pyqtSlot(dict)

@@ -1,11 +1,13 @@
 from PyQt5 import QtCore, QtWidgets, uic
-from widget.param import ParamBankWidget
+
+from ..consts import PARAM_DIALOG_UI
+from ..widget.param import ParamBankWidget
 
 
 class ParamBankDialog(QtWidgets.QDialog):
     def __init__(self, parent: QtWidgets.QMainWindow):
         super().__init__(parent)
-        uic.loadUi("src/ui/param_dialog.ui", self)
+        uic.loadUi(PARAM_DIALOG_UI, self)
         self.parent = parent
         self.parent.addrs_updated.connect(self._update_addresses)
 

@@ -1,9 +1,10 @@
 from PyQt5 import QtCore, QtWidgets, uic, QtGui
-from util import are_parameters_equal, safe_pydrs
-from threads import FetchParamThread
+from ..util import are_parameters_equal, safe_pydrs
+from ..threads import FetchParamThread
+from ..models import DictTableModel
 import qtawesome as qta
 
-from models import DictTableModel
+from ..consts import PARAM_UI
 
 
 class ParamBankWidget(QtWidgets.QWidget):
@@ -11,7 +12,7 @@ class ParamBankWidget(QtWidgets.QWidget):
 
     def __init__(self, parent: QtWidgets.QMainWindow, addr: int, dsp: bool = False):
         super().__init__(parent)
-        uic.loadUi("src/ui/param.ui", self)
+        uic.loadUi(PARAM_UI, self)
         self.parent = parent
         self.dsp = dsp
         self.addr = addr

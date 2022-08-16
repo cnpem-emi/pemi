@@ -1,8 +1,7 @@
 from PyQt5 import QtCore
 from pydrs import pydrs, validation
-from consts import MON_VARS
-
-from util import safe_pydrs
+from .consts import MON_VARS
+from .util import safe_pydrs
 
 
 class BasicCommThread(QtCore.QThread):
@@ -13,6 +12,11 @@ class BasicCommThread(QtCore.QThread):
         self.pydrs = pydrs
         self.mutex = mutex
         self.addr = addr
+
+    def __del__(self):
+        print(self.mutex.unlock())
+        self.quit()
+        self.wait()
 
     def run(self):
         self.finished.emit()
@@ -83,7 +87,6 @@ class FetchParamThread(BasicCommThread):
                 self.finished.emit(dsp)
             else:
                 self.finished.emit(drs.get_param_bank(print_modules=False))
-        self.mutex.unlock()
 
 
 class FetchSpecificData(BasicCommThread):
@@ -95,5 +98,4 @@ class FetchSpecificData(BasicCommThread):
         with safe_pydrs(self.pydrs, self.mutex, self.addr) as drs:
             info = getattr(drs, f"read_vars_{self.ps_model.lower()}")()
             info["mon"] = info[MON_VARS[self.ps_model]]
-            print(info)
             self.finished.emit(info)

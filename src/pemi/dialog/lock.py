@@ -1,7 +1,9 @@
 from PyQt5 import QtCore, QtWidgets, uic
 import pydrs
 
-from util import show_message
+from ..consts import LOCK_UI
+
+from ..util import show_message
 
 
 class PasswordDialog(QtWidgets.QDialog):
@@ -9,7 +11,7 @@ class PasswordDialog(QtWidgets.QDialog):
 
     def __init__(self, parent: QtWidgets.QMainWindow):
         super().__init__(parent)
-        uic.loadUi("src/ui/lock.ui", self)
+        uic.loadUi(LOCK_UI, self)
         self.parent = parent
         self.buttonBox.accepted.connect(self.unlock_udc)
 

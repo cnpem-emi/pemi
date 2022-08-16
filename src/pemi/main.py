@@ -2,12 +2,15 @@ from PyQt5 import QtWidgets, uic, QtCore
 import pydrs
 from socket import timeout as SocketTimeout
 import sys
-from widget.basic import BasicInfoWidget
-from dialog.param import ParamBankDialog
-from widget.tab import DetachableTabWidget
-from threads import FetchAddressesThread, FetchDataThread
-from util import QVersionLabel, show_message
+from pemi import __version__ as mod_version
+from .widget.basic import BasicInfoWidget
+from .dialog.param import ParamBankDialog
+from .widget.tab import DetachableTabWidget
+from .threads import FetchAddressesThread
+from .util import QVersionLabel, show_message
 import qtawesome as qta
+
+from .consts import CLOSE_BTN_STYLE, MAIN_UI
 
 
 class Ui(QtWidgets.QMainWindow):
@@ -17,19 +20,21 @@ class Ui(QtWidgets.QMainWindow):
 
     def __init__(self):
         super(Ui, self).__init__()
-        uic.loadUi("src/ui/main.ui", self)
+        uic.loadUi(MAIN_UI, self)
         self._set_tabs()
         self.connectButton.clicked.connect(self.connect)
         self.pydrs: pydrs.BaseDRS = None
-        self.data_thread: FetchDataThread = None
         self.addresses_thread: FetchAddressesThread = None
 
         self.pydrsVersionLabel = QVersionLabel(self, "PyDRS")
+        self.uiVersionLabel = QVersionLabel(self, "UI")
         self.loading = qta.IconWidget()
 
         self.pydrsVersionLabel.setVersionText(f"v{pydrs.__version__}")
+        self.uiVersionLabel.setVersionText(f"v{mod_version}")
 
         self.statusbar.addPermanentWidget(self.pydrsVersionLabel)
+        self.statusbar.addPermanentWidget(self.uiVersionLabel)
         self.statusbar.addPermanentWidget(self.loading)
 
         self.addressBox.currentIndexChanged.connect(self._switch_address)
@@ -48,8 +53,10 @@ class Ui(QtWidgets.QMainWindow):
     def connect(self):
         try:
             try:
-                self.windows = []
-                self.tabs.clear()
+                for i in range(0, self.tabs.count()):
+                    self.tabs.widget(i).deleteLater()
+                    self.tabs.removeTab(i)
+
                 self.pydrs = pydrs.GenericDRS(self.ipLineEdit.text(), int(self.portLineEdit.text()))
                 self.menubar.setEnabled(True)
                 self.load_done.emit()
@@ -79,7 +86,6 @@ class Ui(QtWidgets.QMainWindow):
 
     @QtCore.pyqtSlot(int)
     def _close_tab(self, index: int):
-        self.windows.pop(index)
         self.tabs.widget(index).deleteLater()
         self.tabs.removeTab(index)
 
@@ -99,10 +105,12 @@ class Ui(QtWidgets.QMainWindow):
     @QtCore.pyqtSlot(int)
     def _switch_address(self, index: int):
         addr = self.valid_slaves[index]["addr"]
-        if not any(addr == widget.addr for widget in self.windows):
-            new_window = BasicInfoWidget(self, addr)
-            self.windows.append(new_window)
-            self.tabs.addTab(new_window, self.valid_slaves[index]["name"])
+        for i in range(0, self.tabs.count()):
+            if addr == self.tabs.widget(i).addr:
+                return
+
+        new_window = BasicInfoWidget(self, addr)
+        self.tabs.addTab(new_window, self.valid_slaves[index]["name"])
         self.ps_changed.emit()
 
     def _set_tabs(self):
@@ -114,14 +122,14 @@ class Ui(QtWidgets.QMainWindow):
         self.tabLayout.insertWidget(0, self.tabs)
         self.tabs.tabCloseRequested.connect(self._close_tab)
 
-        self.tabs.setStyleSheet(
-            """
-        QTabBar::close-button {
-            image: url(src/ui/res/close-circle.png)
-        }"""
-        )
+        self.tabs.setStyleSheet(CLOSE_BTN_STYLE)
 
 
-app = QtWidgets.QApplication(sys.argv)
-window = Ui()
-app.exec_()
+def run():
+    app = QtWidgets.QApplication(sys.argv)
+    Ui()
+    app.exec_()
+
+
+if __name__ == "__main__":
+    run()
