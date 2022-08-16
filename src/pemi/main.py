@@ -127,7 +127,7 @@ class Ui(QtWidgets.QMainWindow):
 
 def run():
     app = QtWidgets.QApplication(sys.argv)
-    Ui()
+    window = Ui()  # noqa: F841
     app.exec_()
 
 
