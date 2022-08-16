@@ -1,5 +1,7 @@
 # PyDRS Enabled Maintenance Interface (PEMI)
 
+![screenshot](docs/screencap.png)
+
 PEMI is a basic graphical interface for PyDRS made with Qt, aiming to provide core PyDRS functionalities in an easy to navigate manner.
 
 ## Requirements
