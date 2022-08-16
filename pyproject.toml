@@ -18,7 +18,8 @@ classifiers=[
 description=""
 dependencies = [
     "pydrs>=1.2.4",
-    "qtawesome==1.1.1"
+    "qtawesome==1.1.1",
+    "PyQt5==5.15.4"
 ]
 readme="README.md"
 license = {text = "GPL v3 License"}

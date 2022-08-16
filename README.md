@@ -13,7 +13,7 @@ PEMI is a basic graphical interface for PyDRS made with Qt, aiming to provide co
 You can create Conda environments to isolate different installations, with different specifications. You can create and activate a Conda environment before proceeding with:
 
 ```sh
-conda create --name pemi python=3.10
+conda create --name pemi
 conda activate pemi
 ```
 
