@@ -59,13 +59,13 @@ class BasicInfoWidget(QtWidgets.QDialog):
 
     @QtCore.pyqtSlot()
     def load_info(self):
-        print(self.addr)
         self.data_thread.start()
         self.ps_thread.start()
 
     @QtCore.pyqtSlot(float)
     def _update_interval(self, rate: float):
-        self.timer.setInterval(1 / rate * 1000)
+        if rate > 0:
+            self.timer.setInterval(1 / rate * 1000)
 
     @QtCore.pyqtSlot(dict)
     def _save_common_info(self, info: dict):

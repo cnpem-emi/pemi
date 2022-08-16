@@ -52,17 +52,13 @@ class Ui(QtWidgets.QMainWindow):
     @QtCore.pyqtSlot()
     def connect(self):
         try:
-            try:
-                for i in range(0, self.tabs.count()):
-                    self.tabs.widget(i).deleteLater()
-                    self.tabs.removeTab(i)
+            for i in range(0, self.tabs.count()):
+                self.tabs.widget(i).deleteLater()
+                self.tabs.removeTab(i)
 
-                self.pydrs = pydrs.GenericDRS(self.ipLineEdit.text(), int(self.portLineEdit.text()))
-                self.menubar.setEnabled(True)
-                self.load_done.emit()
-            except ConnectionRefusedError:
-                show_message("Error", "Connection refused, check if equipment is connected.")
-                return
+            self.pydrs = pydrs.GenericDRS(self.ipLineEdit.text(), int(self.portLineEdit.text()))
+            self.menubar.setEnabled(True)
+            self.load_done.emit()
 
             if isinstance(self.pydrs, pydrs.EthDRS):
                 self.conTypeLabel.setText("Ethernet")
@@ -78,6 +74,10 @@ class Ui(QtWidgets.QMainWindow):
             self.addressLabel.setEnabled(True)
         except SocketTimeout:
             show_message("Error", f"Could not connect to {self.ipLineEdit.text()}.")
+        except ConnectionRefusedError:
+            show_message("Error", "Connection refused, check if equipment is connected.")
+        except ValueError:
+            show_message("Error", "Please input a valid address and port (or port and baudrate)")
 
     @QtCore.pyqtSlot()
     def _open_param_dialog(self):

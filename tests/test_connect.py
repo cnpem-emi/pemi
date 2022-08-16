@@ -1,41 +1,56 @@
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import patch
+import unittest
 from pemi.main import Ui
-from PyQt5 import QtCore
+from PyQt5 import QtCore, QtWidgets
 import socket
+import sys
+from PyQt5.QtTest import QTest
 
 
-def test_default(qtbot):
-    window = Ui()
-    qtbot.addWidget(window)
-
-    assert not window.addressBox.isEnabled()
-    assert window.ipLineEdit.isEnabled()
-    assert window.portLineEdit.isEnabled()
+app = QtWidgets.QApplication(sys.argv)
 
 
-@patch("pydrs.pydrs.EthDRS")
-def test_connect(pydrs_mock, qtbot):
-    window = Ui()
-    # pydrs_mock = MagicMock()
+class ConnectTest(unittest.TestCase):
+    ui = None
 
-    qtbot.addWidget(window)
-    qtbot.keyClicks(window.ipLineEdit, "127.0.0.1")
-    qtbot.keyClicks(window.portLineEdit, "6000")
-    qtbot.mouseClick(window.connectButton, QtCore.Qt.LeftButton)
+    def setUp(self):
+        self.ui = Ui()
 
-    with qtbot.waitSignal(window.addresses_thread.finished, timeout=10000):
-        assert window.addressBox.isEnabled()
+    def test_defaults(self):
+        self.assertTrue(self.ui.ipLineEdit.isEnabled())
+        self.assertTrue(self.ui.portLineEdit.isEnabled())
+        self.assertTrue(self.ui.connectButton.isEnabled())
 
+        self.assertFalse(self.ui.addressBox.isEnabled())
 
-@patch("pydrs.pydrs.EthDRS")
-def test_connect_fail(pydrs_mock, qtbot):
-    window = Ui()
-    pydrs_mock.connect.side_effect = socket.timeout
+    @patch("pydrs.pydrs.EthDRS")
+    @patch.object(QtWidgets.QMessageBox, "exec_")
+    def test_invalid_connect(self, msgbox, pydrs_mock):
+        QTest.mouseClick(self.ui.connectButton, QtCore.Qt.LeftButton)
+        self.assertTrue(msgbox.called)
 
-    qtbot.addWidget(window)
-    qtbot.keyClicks(window.ipLineEdit, "127.0.0.1")
-    qtbot.keyClicks(window.portLineEdit, "6000")
-    qtbot.mouseClick(window.connectButton, QtCore.Qt.LeftButton)
+    @patch("pydrs.pydrs.EthDRS")
+    @patch.object(QtWidgets.QMessageBox, "exec_")
+    def test_timeout_connect(self, msgbox, pydrs_mock):
+        pydrs_mock.side_effect = socket.timeout()
+        QTest.keyClicks(self.ui.ipLineEdit, "127.0.0.1")
+        QTest.keyClicks(self.ui.portLineEdit, "6000")
+        QTest.mouseClick(self.ui.connectButton, QtCore.Qt.LeftButton)
+        self.assertTrue(msgbox.called)
 
-    with qtbot.waitSignal(window.addresses_thread.finished, timeout=10000):
-        assert window.addressBox.isEnabled()
+    @patch("pydrs.pydrs.EthDRS")
+    @patch.object(QtWidgets.QMessageBox, "exec_")
+    def test_refused_connect(self, msgbox, pydrs_mock):
+        pydrs_mock.side_effect = ConnectionRefusedError()
+        QTest.keyClicks(self.ui.ipLineEdit, "127.0.0.1")
+        QTest.keyClicks(self.ui.portLineEdit, "6000")
+        QTest.mouseClick(self.ui.connectButton, QtCore.Qt.LeftButton)
+        self.assertTrue(msgbox.called)
+
+    @patch("pydrs.pydrs.EthDRS")
+    def test_valid_connect(self, pydrs_mock):
+        QTest.keyClicks(self.ui.ipLineEdit, "127.0.0.1")
+        QTest.keyClicks(self.ui.portLineEdit, "6000")
+        QTest.mouseClick(self.ui.connectButton, QtCore.Qt.LeftButton)
+
+        self.assertTrue(self.ui.addressBox.isEnabled())

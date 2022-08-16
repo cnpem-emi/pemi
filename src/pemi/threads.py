@@ -14,7 +14,6 @@ class BasicCommThread(QtCore.QThread):
         self.addr = addr
 
     def __del__(self):
-        print(self.mutex.unlock())
         self.quit()
         self.wait()
 

@@ -1,3 +1,4 @@
+import traceback
 from PyQt5 import QtWidgets, QtCore
 from contextlib import contextmanager
 from pydrs.pydrs import BaseDRS
@@ -44,7 +45,7 @@ def safe_pydrs(pydrs: BaseDRS, mutex: QtCore.QMutex, addr: int):
         if addr is not None:
             pydrs.slave_addr = addr
         yield pydrs
-    except Exception as e:
-        print(str(e))
+    except Exception:
+        print(traceback.format_exc())
     finally:
         mutex.unlock()

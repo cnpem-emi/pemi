@@ -40,3 +40,6 @@ version = {attr = "pemi.__version__"}
 dev = [
     "pytest==7.1.2"
 ]
+windows = [
+    "pyinstaller==5.3"
+]
