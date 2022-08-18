@@ -65,7 +65,7 @@ class BasicInfoWidget(QtWidgets.QDialog):
     @QtCore.pyqtSlot(float)
     def _update_interval(self, rate: float):
         if rate > 0:
-            self.timer.setInterval(1 / rate * 1000)
+            self.timer.setInterval(int(1 / rate * 1000))
 
     @QtCore.pyqtSlot(dict)
     def _save_common_info(self, info: dict):

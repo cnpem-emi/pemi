@@ -1,7 +1,13 @@
+from xml.dom.minidom import Attr
 from PyQt5 import QtCore
 from pydrs import pydrs, validation
 from .consts import MON_VARS
 from .util import safe_pydrs
+import pydrs.consts.fac as fac
+import pydrs.consts.fbp as fbp
+import pydrs.consts.fap as fap
+
+# TODO: Once all PyDRS functions are readable by code, fix this
 
 
 class BasicCommThread(QtCore.QThread):
@@ -42,7 +48,7 @@ class FetchAddressesThread(BasicCommThread):
     def run(self):
         with safe_pydrs(self.pydrs, self.mutex, self.addr) as drs:
             valid_slaves = []
-            for i in range(1, 31):
+            for i in range(1, 30):
                 drs.slave_addr = i
                 try:
                     drs.read_udc_arm_version()
@@ -95,6 +101,35 @@ class FetchSpecificData(BasicCommThread):
 
     def run(self):
         with safe_pydrs(self.pydrs, self.mutex, self.addr) as drs:
+            lists = fbp
+            var_name = f"list_{self.ps_model.lower()}"
+            soft_ilocks = []
+            hard_ilocks = []
+            try:
+                soft_ilocks = getattr(lists, f"{var_name}_soft_interlocks")
+            except AttributeError:
+                pass
+
+            try:
+                hard_ilocks = getattr(lists, f"{var_name}_hard_interlocks")
+            except AttributeError:
+                pass
+
+            if "FAP" in self.ps_model:
+                lists = fap
+            elif "FAC" in self.ps_model:
+                lists = fac
+
+            info = {
+                "mon": f"{round(drs.read_bsmp_variable(MON_VARS[self.ps_model]['id'], 'float'), 3)} {MON_VARS[self.ps_model]['egu']}"
+            }
+            info = drs._include_interlocks(
+                info,
+                soft_ilocks,
+                hard_ilocks,
+            )
+            """
             info = getattr(drs, f"read_vars_{self.ps_model.lower()}")()
             info["mon"] = info[MON_VARS[self.ps_model]]
+            """
             self.finished.emit(info)
