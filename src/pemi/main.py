@@ -51,6 +51,9 @@ class Ui(QtWidgets.QMainWindow):
 
     @QtCore.pyqtSlot()
     def connect(self):
+        if self.portLineEdit.text() == "":
+            self.portLineEdit.setText("5000")
+
         try:
             for i in range(0, self.tabs.count()):
                 self.tabs.widget(i).deleteLater()
@@ -121,8 +124,6 @@ class Ui(QtWidgets.QMainWindow):
 
         self.tabLayout.insertWidget(0, self.tabs)
         self.tabs.tabCloseRequested.connect(self._close_tab)
-
-        self.tabs.setStyleSheet(CLOSE_BTN_STYLE)
 
 
 def run():
