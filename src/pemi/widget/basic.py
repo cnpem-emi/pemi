@@ -1,5 +1,5 @@
 from PyQt5 import QtCore, QtWidgets, uic
-import pydrs
+
 from ..dialog.lock import PasswordDialog
 from ..models import ListModel
 from ..threads import FetchDataThread, FetchSpecificData
@@ -7,6 +7,13 @@ import qtawesome as qta
 
 from pemi.util import safe_pydrs
 from ..consts import BASIC_UI
+
+from pydrs import __version__ as pydrs_version
+
+if int(pydrs_version.split(".")[0]) < 2:
+    from pydrs.consts.common_list import list_op_mode as op_modes
+else:
+    from pydrs.consts.common import op_modes as op_modes
 
 
 class BasicInfoWidget(QtWidgets.QDialog):
@@ -75,7 +82,7 @@ class BasicInfoWidget(QtWidgets.QDialog):
         self.locked = not info["unlocked"]
         self.refLabel.setText(info["reference"])
         self.readbackLabel.setText(info["setpoint"])
-        self.power = pydrs.consts.common.list_op_mode.index(self.state) > 2
+        self.power = op_modes.index(self.state) > 2
         self.armVerLabel.setText(info["version"]["arm"])
         self.dspVerLabel.setText(info["version"]["c28"])
 
@@ -139,7 +146,7 @@ class BasicInfoWidget(QtWidgets.QDialog):
         self._state = state
         self.stateLabel.setText(state)
 
-        if pydrs.consts.common.list_op_mode.index(state) > 2:
+        if op_modes.index(state) > 2:
             self.slowRefIcon.setIcon(qta.icon("fa5s.circle", color="green"))
         else:
             self.slowRefIcon.setIcon(qta.icon("fa5s.circle", color="red"))

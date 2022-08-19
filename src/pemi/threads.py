@@ -1,11 +1,13 @@
-from xml.dom.minidom import Attr
 from PyQt5 import QtCore
 from pydrs import pydrs, validation
+from pydrs import __version__ as pydrs_version
 from .consts import MON_VARS
 from .util import safe_pydrs
-import pydrs.consts.fac as fac
-import pydrs.consts.fbp as fbp
-import pydrs.consts.fap as fap
+
+if int(pydrs_version.split(".")[0]) < 2:
+    import pydrs.consts.fac as fac
+    import pydrs.consts.fbp as fbp
+    import pydrs.consts.fap as fap
 
 # TODO: Once all PyDRS functions are readable by code, fix this
 
@@ -101,35 +103,38 @@ class FetchSpecificData(BasicCommThread):
 
     def run(self):
         with safe_pydrs(self.pydrs, self.mutex, self.addr) as drs:
-            lists = fbp
-            var_name = f"list_{self.ps_model.lower()}"
-            soft_ilocks = []
-            hard_ilocks = []
-            try:
-                soft_ilocks = getattr(lists, f"{var_name}_soft_interlocks")
-            except AttributeError:
-                pass
+            info = {}
+            if int(pydrs_version.split(".")[0]) < 2:
+                lists = fbp
+                var_name = f"list_{self.ps_model.lower()}"
+                soft_ilocks = []
+                hard_ilocks = []
 
-            try:
-                hard_ilocks = getattr(lists, f"{var_name}_hard_interlocks")
-            except AttributeError:
-                pass
+                try:
+                    soft_ilocks = getattr(lists, f"{var_name}_soft_interlocks")
+                except AttributeError:
+                    pass
 
-            if "FAP" in self.ps_model:
-                lists = fap
-            elif "FAC" in self.ps_model:
-                lists = fac
+                try:
+                    hard_ilocks = getattr(lists, f"{var_name}_hard_interlocks")
+                except AttributeError:
+                    pass
 
-            info = {
-                "mon": f"{round(drs.read_bsmp_variable(MON_VARS[self.ps_model]['id'], 'float'), 3)} {MON_VARS[self.ps_model]['egu']}"
-            }
-            info = drs._include_interlocks(
-                info,
-                soft_ilocks,
-                hard_ilocks,
-            )
-            """
-            info = getattr(drs, f"read_vars_{self.ps_model.lower()}")()
-            info["mon"] = info[MON_VARS[self.ps_model]]
-            """
+                if "FAP" in self.ps_model:
+                    lists = fap
+                elif "FAC" in self.ps_model:
+                    lists = fac
+
+                info = {
+                    "mon": f"{round(drs.read_bsmp_variable(MON_VARS[self.ps_model]['id'], 'float'), 3)} {MON_VARS[self.ps_model]['egu']}"
+                }
+                info = drs._include_interlocks(
+                    info,
+                    soft_ilocks,
+                    hard_ilocks,
+                )
+            else:
+                info = getattr(drs, f"read_vars_{self.ps_model.lower()}")()
+                info["mon"] = info[MON_VARS[self.ps_model]]
+
             self.finished.emit(info)
