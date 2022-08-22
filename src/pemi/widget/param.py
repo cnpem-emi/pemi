@@ -46,7 +46,7 @@ class ParamBankWidget(QtWidgets.QWidget):
 
     @QtCore.pyqtSlot()
     def _edit_param_bank(self):
-        self.paramEditTable.setModel(DictTableModel(self.read_params))
+        self.paramEditTable.setModel(DictTableModel(self.read_params, editable=True))
         self.paramEditTable.resizeColumnsToContents()
 
     @QtCore.pyqtSlot()

@@ -17,7 +17,7 @@ classifiers=[
 ]
 description=""
 dependencies = [
-    "pydrs>=1.2.4",
+    "pydrs>=1.2.6",
     "qtawesome==1.1.1",
     "PyQt5==5.15.4"
 ]

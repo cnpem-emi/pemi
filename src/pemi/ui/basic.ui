@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>BasicInfoWidget</class>
- <widget class="QWidget" name="BasicInfoWidget">
+ <class>PsInfoWidget</class>
+ <widget class="QWidget" name="PsInfoWidget">
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>753</width>
+    <width>893</width>
     <height>525</height>
    </rect>
   </property>
@@ -23,7 +23,7 @@
       <enum>QTabWidget::East</enum>
      </property>
      <property name="currentIndex">
-      <number>0</number>
+      <number>1</number>
      </property>
      <widget class="QWidget" name="tab_2">
       <attribute name="title">
@@ -437,6 +437,111 @@
       <attribute name="title">
        <string>Advanced</string>
       </attribute>
+      <layout class="QGridLayout" name="gridLayout_8" columnstretch="1,1">
+       <item row="0" column="0">
+        <widget class="QGroupBox" name="varMonBox">
+         <property name="title">
+          <string>Monitor Variables</string>
+         </property>
+         <layout class="QGridLayout" name="gridLayout_9" columnstretch="3,0,6,0">
+          <item row="2" column="1">
+           <widget class="QLabel" name="label_16">
+            <property name="text">
+             <string>ID:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="0">
+           <widget class="QLabel" name="label_15">
+            <property name="text">
+             <string>Monitor:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="2">
+           <widget class="QComboBox" name="selectVarBox"/>
+          </item>
+          <item row="0" column="0" colspan="4">
+           <widget class="QTableView" name="varsTable">
+            <attribute name="horizontalHeaderVisible">
+             <bool>false</bool>
+            </attribute>
+            <attribute name="horizontalHeaderStretchLastSection">
+             <bool>true</bool>
+            </attribute>
+           </widget>
+          </item>
+          <item row="1" column="0" colspan="4">
+           <widget class="Line" name="line_4">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="3">
+           <widget class="QPushButton" name="addVarButton">
+            <property name="text">
+             <string>Add</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item row="0" column="1">
+        <widget class="QGroupBox" name="groupBox_6">
+         <property name="title">
+          <string>Plot</string>
+         </property>
+         <layout class="QGridLayout" name="gridLayout_10" columnstretch="2,0,6,0">
+          <item row="0" column="0">
+           <widget class="QWidget" name="widget" native="true"/>
+          </item>
+          <item row="2" column="2">
+           <widget class="QComboBox" name="comboBox"/>
+          </item>
+          <item row="2" column="3">
+           <widget class="QPushButton" name="pushButton">
+            <property name="text">
+             <string>Add</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0" colspan="4">
+           <widget class="Line" name="line_5">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="0">
+           <widget class="QLabel" name="label_17">
+            <property name="text">
+             <string>Plot:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="1">
+           <widget class="QLabel" name="label_18">
+            <property name="text">
+             <string>ID:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="3">
+           <widget class="QSpinBox" name="spinBox"/>
+          </item>
+          <item row="3" column="1" colspan="2">
+           <widget class="QLabel" name="label_19">
+            <property name="text">
+             <string>Number of points to store:</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+      </layout>
      </widget>
     </widget>
    </item>

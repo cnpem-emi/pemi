@@ -2,10 +2,12 @@ from PyQt5 import QtCore, QtGui
 
 
 class DictTableModel(QtCore.QAbstractTableModel):
-    def __init__(self, data={}, parent=None):
+    def __init__(self, data={}, parent=None, editable=False, row_count=64):
         super().__init__(parent)
-        self.data = data
+        self._data = data
         self._headers = list(data.keys())
+        self.editable = editable
+        self.row_count = row_count
 
         self.highlighted = {}
 
@@ -17,30 +19,47 @@ class DictTableModel(QtCore.QAbstractTableModel):
                 return ""
 
     def columnCount(self, parent=None):
-        return 64  # Largest list returned by UDC
+        return self.row_count
 
     def rowCount(self, parent=None):
-        return len(list(self.data.keys()))
+        return len(list(self._data.keys()))
 
     def setData(self, index, value, role):
         if role == QtCore.Qt.EditRole:
-            self.data[list(self.data.keys())[index.row()]][index.column()] = value
+            self._data[list(self.data.keys())[index.row()]][index.column()] = value
+            return True
+        elif role == QtCore.Qt.ItemDataRole:
+            self._data[index] = value
+            row = list(self._data.keys()).index(index)
+            self.headerDataChanged.emit(QtCore.Qt.Orientation.Vertical, row, row)
+            self.dataChanged.emit(self.index(row, 0), self.index(row, len(value) - 1))
             return True
 
+    def insertRow(self, row, index=None, key=""):
+        if index is None:
+            index = self.index(0, 0)
+        self.beginInsertRows(index, row, row + 1)
+        self._data[key] = ["Unknown"]
+        self._headers = list(self._data.keys())
+        self.endInsertRows()
+
     def flags(self, index):
-        return QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsEditable
+        if self.editable:
+            return QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsEditable
+        else:
+            return QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled
 
     def data(self, index: QtCore.QModelIndex, role: int):
         row = index.row()
         col = index.column()
-        key = list(self.data.keys())[row]
+        key = list(self._data.keys())[row]
 
         if role == QtCore.Qt.BackgroundRole:
             if key in self.highlighted:
                 return self.highlighted[key]
         if role in (QtCore.Qt.DisplayRole, QtCore.Qt.EditRole):
             try:
-                return str(self.data[key][col])
+                return str(self._data[key][col])
             except IndexError:
                 return ""
 

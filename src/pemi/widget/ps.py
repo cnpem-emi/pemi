@@ -1,7 +1,7 @@
 from PyQt5 import QtCore, QtWidgets, uic
 
 from ..dialog.lock import PasswordDialog
-from ..models import ListModel
+from ..models import DictTableModel, ListModel
 from ..threads import FetchDataThread, FetchSpecificData
 import qtawesome as qta
 
@@ -16,7 +16,7 @@ else:
     from pydrs.consts.common import op_modes as op_modes
 
 
-class BasicInfoWidget(QtWidgets.QDialog):
+class PsInfoWidget(QtWidgets.QDialog):
     def __init__(self, parent: QtWidgets.QMainWindow, addr: int):
         super().__init__(parent)
         uic.loadUi(BASIC_UI, self)
@@ -25,11 +25,18 @@ class BasicInfoWidget(QtWidgets.QDialog):
         self.addr = addr
         self.interval = 1000
 
+        self.available_vars = []
+        self.vars = {}
+
+        self.varsTable.setModel(DictTableModel(self.vars, row_count=1))
+
         self.data_thread = FetchDataThread(self.parent.pydrs, self.parent.mutex, self.addr)
         self.data_thread.finished.connect(self._save_common_info)
+        self.data_thread.started.connect(self.parent.enable_loading)
 
         self.ps_thread = FetchSpecificData(self.parent.pydrs, self.parent.mutex, self.addr)
         self.ps_thread.finished.connect(self._save_ps_info)
+        self.ps_thread.started.connect(self.parent.enable_loading)
 
         with safe_pydrs(self.pydrs, self.parent.mutex, self.addr) as pydrs:
             info = pydrs.read_vars_common()
@@ -52,6 +59,7 @@ class BasicInfoWidget(QtWidgets.QDialog):
         self.loopButton.clicked.connect(self._toggle_loop)
         self.refreshBox.valueChanged.connect(self._update_interval)
         self.setpointButton.clicked.connect(self._set_setpoint)
+        self.addVarButton.clicked.connect(self._add_mon_var)
 
         self.slowRefIcon = qta.IconWidget("fa5s.circle")
         self.psLayout.insertWidget(3, self.slowRefIcon)
@@ -85,9 +93,20 @@ class BasicInfoWidget(QtWidgets.QDialog):
         self.power = op_modes.index(self.state) > 2
         self.armVerLabel.setText(info["version"]["arm"])
         self.dspVerLabel.setText(info["version"]["c28"])
+        self.parent.disable_loading()
+
+    @QtCore.pyqtSlot()
+    def _add_mon_var(self):
+        self.varsTable.model().insertRow(0, key=self.selectVarBox.currentText())
+        self.varsTable.resizeColumnsToContents()
 
     @QtCore.pyqtSlot(dict)
     def _save_ps_info(self, info: dict):
+        if len(info.keys()) != len(self.available_vars):
+            self.available_vars = info.keys()
+            self.selectVarBox.clear()
+            self.selectVarBox.addItems(self.available_vars)
+
         info = {**{"hard_interlocks": [], "soft_interlocks": [], "alarms": []}, **info}
         self.interlocks = {
             "hard": info["hard_interlocks"],
@@ -95,6 +114,10 @@ class BasicInfoWidget(QtWidgets.QDialog):
             "alarms": info["alarms"],
         }
         self.monLabel.setText(info["mon"])
+
+        for var in self.vars:
+            self.varsTable.model().setData(var, [info[var]], QtCore.Qt.ItemDataRole)
+        self.parent.disable_loading()
 
     @QtCore.pyqtSlot()
     def _reset_ilocks(self):

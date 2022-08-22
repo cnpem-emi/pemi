@@ -50,9 +50,12 @@ python run.py
 - Execute `run.exe` 
 
 #### Building
+- Clone the repository and navigate to the root folder
 - Install Windows build dependencies with `pip install .[windows]`
 - Run `pyinstaller run.spec`
 - Check if relevant files are in the `dist` folder
+
+In case you have updated the module, install it again with `pip install .`. For more debugging info, run it from a terminal so that tracebacks and debug information gets printed.
 
 ### Developer information
 

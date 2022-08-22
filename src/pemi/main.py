@@ -3,7 +3,7 @@ import pydrs
 from socket import timeout as SocketTimeout
 import sys
 from pemi import __version__ as mod_version
-from .widget.basic import BasicInfoWidget
+from .widget.ps import PsInfoWidget
 from .dialog.param import ParamBankDialog
 from .widget.tab import DetachableTabWidget
 from .threads import FetchAddressesThread
@@ -38,7 +38,7 @@ class Ui(QtWidgets.QMainWindow):
         self.statusbar.addPermanentWidget(self.uiVersionLabel)
         self.statusbar.addPermanentWidget(self.loading)
 
-        self.resetUDCButton.setIcon(qta.icon("fa5s.power-off"))
+        self.resetUDCButton.setIcon(qta.icon("mdi.power-cycle"))
         self.resetUDCButton.clicked.connect(self._reset_udc)
 
         self.addressBox.currentIndexChanged.connect(self._switch_address)
@@ -94,6 +94,14 @@ class Ui(QtWidgets.QMainWindow):
         param_dialog.show()
 
     @QtCore.pyqtSlot()
+    def enable_loading(self):
+        self.loading.setIcon(qta.icon("fa5s.spinner", animation=qta.Spin(self.loading)))
+
+    @QtCore.pyqtSlot()
+    def disable_loading(self):
+        self.loading.setIcon(qta.icon("fa5s.check"))
+
+    @QtCore.pyqtSlot()
     def _reset_udc(self):
         if (
             show_message(
@@ -132,7 +140,7 @@ class Ui(QtWidgets.QMainWindow):
             if addr == self.tabs.widget(i).addr:
                 return
 
-        new_window = BasicInfoWidget(self, addr)
+        new_window = PsInfoWidget(self, addr)
         self.tabs.addTab(new_window, self.valid_slaves[index]["name"])
         self.ps_changed.emit()
 
