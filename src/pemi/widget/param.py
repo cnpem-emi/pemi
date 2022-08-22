@@ -8,8 +8,6 @@ from ..consts import PARAM_UI
 
 
 class ParamBankWidget(QtWidgets.QWidget):
-    lock_changed = QtCore.pyqtSignal()
-
     def __init__(self, parent: QtWidgets.QMainWindow, addr: int, dsp: bool = False):
         super().__init__(parent)
         uic.loadUi(PARAM_UI, self)
@@ -18,13 +16,19 @@ class ParamBankWidget(QtWidgets.QWidget):
         self.addr = addr
         self.data_thread: FetchParamThread = None
 
-        self.openParamBankButton.clicked.connect(self.show_dialog)
-        self.clearPBankButton.clicked.connect(self.clear_file)
+        self.openParamBankButton.clicked.connect(self._show_dialog)
+        self.clearPBankButton.clicked.connect(self._clear_file)
 
         self.applyButton.clicked.connect(self.apply_changes)
         self.loadButton.clicked.connect(self.load_to_ram)
-        self.saveFileButton.clicked.connect(self.save_to_file)
-        self.saveButton.clicked.connect(self.save_changes)
+        self.saveFileButton.clicked.connect(self._save_to_file)
+        self.saveButton.clicked.connect(self._save_changes)
+        self.editButton.clicked.connect(self._edit_param_bank)
+
+        self.applyButton.setEnabled(False)
+        self.saveButton.setEnabled(False)
+        self.loadButton.setEnabled(False)
+        self.editButton.setEnabled(False)
 
         self.get_parent_info()
         self.set_icons()
@@ -41,7 +45,12 @@ class ParamBankWidget(QtWidgets.QWidget):
         self._param_file_path = path
 
     @QtCore.pyqtSlot()
-    def save_to_file(self):
+    def _edit_param_bank(self):
+        self.paramEditTable.setModel(DictTableModel(self.read_params))
+        self.paramEditTable.resizeColumnsToContents()
+
+    @QtCore.pyqtSlot()
+    def _save_to_file(self):
         file_dialog = QtWidgets.QFileDialog()
         file = QtWidgets.QFileDialog.getSaveFileName(
             file_dialog, "Save Parameter Bank", filter="CSV Files (*.csv)"
@@ -49,7 +58,7 @@ class ParamBankWidget(QtWidgets.QWidget):
         self.parent.pydrs.store_param_bank_csv(self.read_params, file[0])
 
     @QtCore.pyqtSlot()
-    def show_dialog(self):
+    def _show_dialog(self):
         file_dialog = QtWidgets.QFileDialog()
         file = QtWidgets.QFileDialog.getOpenFileName(
             file_dialog, "Open Parameter Bank", filter="CSV Files (*.csv)"
@@ -65,8 +74,8 @@ class ParamBankWidget(QtWidgets.QWidget):
                 pass
 
         self.param_file_path = file[0]
-        self.paramBankTable.setModel(model)
-        self.paramBankTable.resizeColumnsToContents()
+        self.paramEditTable.setModel(model)
+        self.paramEditTable.resizeColumnsToContents()
 
     def read_csv_file(self, file_path: str = ""):
         parsed_values = {}
@@ -81,22 +90,26 @@ class ParamBankWidget(QtWidgets.QWidget):
             return parsed_values
 
     @QtCore.pyqtSlot()
-    def clear_file(self, is_param_bank: bool = True):
+    def _clear_file(self, is_param_bank: bool = True):
         if is_param_bank:
             self.param_file_path = ""
-            self.paramBankTable.setModel(DictTableModel([]))
+            self.paramEditTable.setModel(DictTableModel([]))
 
     @QtCore.pyqtSlot()
     def apply_changes(self):
         with safe_pydrs(self.parent.pydrs, self.parent.mutex, self.addr) as pydrs:
-            if self.param_file_path:
-                if self.dsp:
-                    pydrs.set_dsp_modules_bank(self.param_file_path)
+            for param, value in self.paramEditTable.model().data.items():
+                if param == "PS_Name":
+                    pydrs.set_ps_name(str(value[0]))
                 else:
-                    pydrs.set_param_bank(self.param_file_path)
+                    for n in range(64):
+                        try:
+                            pydrs.set_param(param, n, float(value[n]))
+                        except IndexError:
+                            break
 
     @QtCore.pyqtSlot()
-    def save_changes(self):
+    def _save_changes(self):
         with safe_pydrs(self.parent.pydrs, self.parent.mutex, self.addr) as pydrs:
             if self.dsp:
                 save_func = pydrs.save_dsp_modules_eeprom
@@ -114,6 +127,11 @@ class ParamBankWidget(QtWidgets.QWidget):
         table = DictTableModel(self.read_params)
         self.paramsTable.setModel(table)
         self.paramsTable.resizeColumnsToContents()
+
+        self.applyButton.setEnabled(True)
+        self.saveButton.setEnabled(True)
+        self.loadButton.setEnabled(True)
+        self.editButton.setEnabled(True)
 
     @QtCore.pyqtSlot()
     def load_to_ram(self):

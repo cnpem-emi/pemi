@@ -22,6 +22,14 @@ class DictTableModel(QtCore.QAbstractTableModel):
     def rowCount(self, parent=None):
         return len(list(self.data.keys()))
 
+    def setData(self, index, value, role):
+        if role == QtCore.Qt.EditRole:
+            self.data[list(self.data.keys())[index.row()]][index.column()] = value
+            return True
+
+    def flags(self, index):
+        return QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsEditable
+
     def data(self, index: QtCore.QModelIndex, role: int):
         row = index.row()
         col = index.column()
@@ -30,7 +38,7 @@ class DictTableModel(QtCore.QAbstractTableModel):
         if role == QtCore.Qt.BackgroundRole:
             if key in self.highlighted:
                 return self.highlighted[key]
-        if role == QtCore.Qt.DisplayRole:
+        if role in (QtCore.Qt.DisplayRole, QtCore.Qt.EditRole):
             try:
                 return str(self.data[key][col])
             except IndexError:

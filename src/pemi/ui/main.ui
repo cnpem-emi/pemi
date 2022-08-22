@@ -28,7 +28,7 @@
      <layout class="QVBoxLayout" name="tabLayout"/>
     </item>
     <item row="3" column="1">
-     <layout class="QHBoxLayout" name="horizontalLayout_2">
+     <layout class="QHBoxLayout" name="horizontalLayout_2" stretch="10,10,1">
       <item>
        <widget class="QLabel" name="addressLabel">
         <property name="font">
@@ -44,6 +44,13 @@
       </item>
       <item>
        <widget class="QComboBox" name="addressBox"/>
+      </item>
+      <item>
+       <widget class="QPushButton" name="resetUDCButton">
+        <property name="text">
+         <string>Reset UDC</string>
+        </property>
+       </widget>
       </item>
      </layout>
     </item>

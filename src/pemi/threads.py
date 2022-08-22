@@ -9,8 +9,6 @@ if int(pydrs_version.split(".")[0]) < 2:
     import pydrs.consts.fbp as fbp
     import pydrs.consts.fap as fap
 
-# TODO: Once all PyDRS functions are readable by code, fix this
-
 
 class BasicCommThread(QtCore.QThread):
     finished = QtCore.pyqtSignal(dict)
@@ -103,7 +101,7 @@ class FetchSpecificData(BasicCommThread):
 
     def run(self):
         with safe_pydrs(self.pydrs, self.mutex, self.addr) as drs:
-            info = {}
+            info = {"mon": "Unknown", "soft_interlocks": [], "hard_interlocks": []}
             if int(pydrs_version.split(".")[0]) < 2:
                 lists = fbp
                 var_name = f"list_{self.ps_model.lower()}"
@@ -125,16 +123,22 @@ class FetchSpecificData(BasicCommThread):
                 elif "FAC" in self.ps_model:
                     lists = fac
 
-                info = {
-                    "mon": f"{round(drs.read_bsmp_variable(MON_VARS[self.ps_model]['id'], 'float'), 3)} {MON_VARS[self.ps_model]['egu']}"
-                }
-                info = drs._include_interlocks(
-                    info,
-                    soft_ilocks,
-                    hard_ilocks,
-                )
+                try:
+                    info = {
+                        "mon": f"{round(drs.read_bsmp_variable(MON_VARS[self.ps_model]['id'], 'float'), 3)} {MON_VARS[self.ps_model]['egu']}"  # noqa: E501
+                    }
+                    info = drs._include_interlocks(
+                        info,
+                        soft_ilocks,
+                        hard_ilocks,
+                    )
+                except ZeroDivisionError:
+                    pass
             else:
-                info = getattr(drs, f"read_vars_{self.ps_model.lower()}")()
-                info["mon"] = info[MON_VARS[self.ps_model]]
+                try:
+                    info = getattr(drs, f"read_vars_{self.ps_model.lower()}")()
+                    info["mon"] = info[MON_VARS[self.ps_model]]
+                except ZeroDivisionError:
+                    pass
 
             self.finished.emit(info)

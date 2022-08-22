@@ -9,9 +9,6 @@ class ParamBankDialog(QtWidgets.QDialog):
         super().__init__(parent)
         uic.loadUi(PARAM_DIALOG_UI, self)
         self.parent = parent
-        self.parent.addrs_updated.connect(self._update_addresses)
-
-        self._update_addresses(self.parent.valid_slaves)
 
         self.param_bank_tab = ParamBankWidget(self.parent, self.parent.valid_slaves[0]["addr"])
         self.dsp_bank_tab = ParamBankWidget(
@@ -21,13 +18,7 @@ class ParamBankDialog(QtWidgets.QDialog):
         self.tabs.addTab(self.param_bank_tab, "Parameter Bank")
         self.tabs.addTab(self.dsp_bank_tab, "DSP Module Bank")
 
-        self.addressBox.currentIndexChanged.connect(self._switch_address)
         self.tabs.setEnabled(True)
-
-    @QtCore.pyqtSlot(list)
-    def _update_addresses(self, addrs: list):
-        self.addressBox.clear()
-        self.addressBox.addItems([v["name"] for v in addrs])
 
     @QtCore.pyqtSlot(int)
     def _switch_address(self, index: int):

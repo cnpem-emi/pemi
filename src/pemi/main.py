@@ -7,10 +7,11 @@ from .widget.basic import BasicInfoWidget
 from .dialog.param import ParamBankDialog
 from .widget.tab import DetachableTabWidget
 from .threads import FetchAddressesThread
-from .util import QVersionLabel, show_message
+from .util import QVersionLabel, safe_pydrs, show_message
+from pydrs.validation import SerialErrPckgLen
 import qtawesome as qta
 
-from .consts import CLOSE_BTN_STYLE, MAIN_UI
+from .consts import MAIN_UI
 
 
 class Ui(QtWidgets.QMainWindow):
@@ -37,11 +38,15 @@ class Ui(QtWidgets.QMainWindow):
         self.statusbar.addPermanentWidget(self.uiVersionLabel)
         self.statusbar.addPermanentWidget(self.loading)
 
+        self.resetUDCButton.setIcon(qta.icon("fa5s.power-off"))
+        self.resetUDCButton.clicked.connect(self._reset_udc)
+
         self.addressBox.currentIndexChanged.connect(self._switch_address)
         self.actionParams.triggered.connect(self._open_param_dialog)
 
         self.valid_slaves = []
 
+        self.resetUDCButton.setEnabled(False)
         self.addressBox.setEnabled(False)
         self.addressLabel.setEnabled(False)
 
@@ -75,6 +80,7 @@ class Ui(QtWidgets.QMainWindow):
             self.tabs.setEnabled(True)
             self.addressBox.setEnabled(True)
             self.addressLabel.setEnabled(True)
+            self.resetUDCButton.setEnabled(True)
         except SocketTimeout:
             show_message("Error", f"Could not connect to {self.ipLineEdit.text()}.")
         except ConnectionRefusedError:
@@ -86,6 +92,20 @@ class Ui(QtWidgets.QMainWindow):
     def _open_param_dialog(self):
         param_dialog = ParamBankDialog(self)
         param_dialog.show()
+
+    @QtCore.pyqtSlot()
+    def _reset_udc(self):
+        if (
+            show_message(
+                "Confirmation", "Are you sure you want to reset the UDC?", interaction=True
+            )
+            == QtWidgets.QMessageBox.Ok
+        ):
+            with safe_pydrs(self.pydrs, self.mutex, self.valid_slaves[0]["addr"]) as pydrs:
+                try:
+                    pydrs.reset_udc(confirm=False)
+                except SerialErrPckgLen:
+                    pass
 
     @QtCore.pyqtSlot(int)
     def _close_tab(self, index: int):
