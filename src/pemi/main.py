@@ -29,11 +29,13 @@ class Ui(QtWidgets.QMainWindow):
 
         self.pydrsVersionLabel = QVersionLabel(self, "PyDRS")
         self.uiVersionLabel = QVersionLabel(self, "UI")
+        self.ethVersionLabel = QVersionLabel(self, "Eth-Bridge")
         self.loading = qta.IconWidget()
 
         self.pydrsVersionLabel.setVersionText(f"v{pydrs.__version__}")
         self.uiVersionLabel.setVersionText(f"v{mod_version}")
 
+        self.statusbar.addPermanentWidget(self.ethVersionLabel)
         self.statusbar.addPermanentWidget(self.pydrsVersionLabel)
         self.statusbar.addPermanentWidget(self.uiVersionLabel)
         self.statusbar.addPermanentWidget(self.loading)
@@ -64,12 +66,17 @@ class Ui(QtWidgets.QMainWindow):
                 self.tabs.widget(i).deleteLater()
                 self.tabs.removeTab(i)
 
-            self.pydrs = pydrs.GenericDRS(self.ipLineEdit.text(), int(self.portLineEdit.text()))
+            self.pydrs = pydrs.GenericDRS(self.ipLineEdit.text(), int(self.portLineEdit.text()))                
             self.menubar.setEnabled(True)
             self.load_done.emit()
 
             if isinstance(self.pydrs, pydrs.EthDRS):
                 self.conTypeLabel.setText("Ethernet")
+                # This breaks EthBridge 2.9 and older
+                #self.pydrs.socket.sendall(b"\x10\x00\x00\x00\x00")
+                #eth_version = self.pydrs.socket.recv(24).decode()[5:].split(":")[0]
+
+                #self.ethVersionLabel.setVersionText(f"v{eth_version}")
             else:
                 self.conTypeLabel.setText("Serial")
 

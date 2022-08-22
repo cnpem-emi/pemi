@@ -11,7 +11,7 @@ class QVersionLabel(QtWidgets.QLabel):
         self.prefix = prefix
 
     def setVersionText(self, text):
-        self.setText(f"{self.prefix}: {text}")
+        self.setText(f"<b>{self.prefix}:</b> {text}")
 
 
 def show_message(title: str, message: str, details: str = "", interaction=False):
