@@ -51,7 +51,3 @@ LOCK_UI = get_abs_ui_path("lock.ui")
 MAIN_UI = get_abs_ui_path("main.ui")
 PARAM_DIALOG_UI = get_abs_ui_path("param_dialog.ui")
 PARAM_UI = get_abs_ui_path("param.ui")
-
-CLOSE_CIRCLE_RES = get_abs_ui_path("res/close-circle.png")
-
-CLOSE_BTN_STYLE = "QTabBar::close-button {image: url(" + CLOSE_CIRCLE_RES + ")}"

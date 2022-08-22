@@ -98,7 +98,7 @@ class ParamBankWidget(QtWidgets.QWidget):
     @QtCore.pyqtSlot()
     def apply_changes(self):
         with safe_pydrs(self.parent.pydrs, self.parent.mutex, self.addr) as pydrs:
-            for param, value in self.paramEditTable.model().data.items():
+            for param, value in self.paramEditTable.model().getData().items():
                 if param == "PS_Name":
                     pydrs.set_ps_name(str(value[0]))
                 else:

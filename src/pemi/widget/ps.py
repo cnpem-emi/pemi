@@ -4,6 +4,8 @@ from ..dialog.lock import PasswordDialog
 from ..models import DictTableModel, ListModel
 from ..threads import FetchDataThread, FetchSpecificData
 import qtawesome as qta
+import pyqtgraph as pq  # noqa: F401
+from pyqtgraph import PlotWidget  # noqa: F401
 
 from pemi.util import safe_pydrs
 from ..consts import BASIC_UI
@@ -27,6 +29,8 @@ class PsInfoWidget(QtWidgets.QDialog):
 
         self.available_vars = []
         self.vars = {}
+        self.plot_var = ""
+        self.plot_var_values = []
 
         self.varsTable.setModel(DictTableModel(self.vars, row_count=1))
 
@@ -60,6 +64,7 @@ class PsInfoWidget(QtWidgets.QDialog):
         self.refreshBox.valueChanged.connect(self._update_interval)
         self.setpointButton.clicked.connect(self._set_setpoint)
         self.addVarButton.clicked.connect(self._add_mon_var)
+        self.selectPlotButton.clicked.connect(self._set_var_plot)
 
         self.slowRefIcon = qta.IconWidget("fa5s.circle")
         self.psLayout.insertWidget(3, self.slowRefIcon)
@@ -81,6 +86,19 @@ class PsInfoWidget(QtWidgets.QDialog):
     def _update_interval(self, rate: float):
         if rate > 0:
             self.timer.setInterval(int(1 / rate * 1000))
+
+    @QtCore.pyqtSlot()
+    def _set_var_plot(self):
+        self.plot_var = self.selectPlotBox.currentText()
+        self.plot_var_values.clear()
+
+    def _update_plot(self, value: float):
+        self.plot_var_values.append(float(value.split(" ")[0]))
+
+        if len(self.plot_var_values) >= self.pointsBox.value():
+            self.plot_var_values.pop(0)
+
+        self.plotWidget.plot(self.plot_var_values, clear=True)
 
     @QtCore.pyqtSlot(dict)
     def _save_common_info(self, info: dict):
@@ -104,8 +122,12 @@ class PsInfoWidget(QtWidgets.QDialog):
     def _save_ps_info(self, info: dict):
         if len(info.keys()) != len(self.available_vars):
             self.available_vars = info.keys()
+
             self.selectVarBox.clear()
             self.selectVarBox.addItems(self.available_vars)
+
+            self.selectPlotBox.clear()
+            self.selectPlotBox.addItems(self.available_vars)
 
         info = {**{"hard_interlocks": [], "soft_interlocks": [], "alarms": []}, **info}
         self.interlocks = {
@@ -117,6 +139,10 @@ class PsInfoWidget(QtWidgets.QDialog):
 
         for var in self.vars:
             self.varsTable.model().setData(var, [info[var]], QtCore.Qt.ItemDataRole)
+
+        if self.plot_var:
+            self._update_plot(info[self.plot_var])
+
         self.parent.disable_loading()
 
     @QtCore.pyqtSlot()

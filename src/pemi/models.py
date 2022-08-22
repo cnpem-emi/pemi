@@ -26,7 +26,7 @@ class DictTableModel(QtCore.QAbstractTableModel):
 
     def setData(self, index, value, role):
         if role == QtCore.Qt.EditRole:
-            self._data[list(self.data.keys())[index.row()]][index.column()] = value
+            self._data[list(self._data.keys())[index.row()]][index.column()] = value
             return True
         elif role == QtCore.Qt.ItemDataRole:
             self._data[index] = value
@@ -34,6 +34,9 @@ class DictTableModel(QtCore.QAbstractTableModel):
             self.headerDataChanged.emit(QtCore.Qt.Orientation.Vertical, row, row)
             self.dataChanged.emit(self.index(row, 0), self.index(row, len(value) - 1))
             return True
+
+    def getData(self) -> dict:
+        return self._data
 
     def insertRow(self, row, index=None, key=""):
         if index is None:
