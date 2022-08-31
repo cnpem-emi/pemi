@@ -1,13 +1,14 @@
-from PyQt5 import QtCore
-from pydrs import pydrs, validation
 from pydrs import __version__ as pydrs_version
+from pydrs import pydrs, validation
+from PyQt5 import QtCore
+
 from .consts import MON_VARS
 from .util import safe_pydrs
 
 if int(pydrs_version.split(".")[0]) < 2:
     import pydrs.consts.fac as fac
-    import pydrs.consts.fbp as fbp
     import pydrs.consts.fap as fap
+    import pydrs.consts.fbp as fbp
 
 
 class BasicCommThread(QtCore.QThread):

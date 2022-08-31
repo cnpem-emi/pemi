@@ -1,11 +1,12 @@
-from unittest.mock import patch
-import unittest
-from pemi.main import Ui
-from PyQt5 import QtCore, QtWidgets
 import socket
 import sys
+import unittest
+from unittest.mock import patch
+
+from PyQt5 import QtCore, QtWidgets
 from PyQt5.QtTest import QTest
 
+from pemi.main import Ui
 
 app = QtWidgets.QApplication(sys.argv)
 

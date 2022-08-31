@@ -1,8 +1,7 @@
-from PyQt5 import QtCore, QtWidgets, uic
 import pydrs
+from PyQt5 import QtCore, QtWidgets, uic
 
 from ..consts import LOCK_UI
-
 from ..util import show_message
 
 

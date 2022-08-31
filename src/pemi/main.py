@@ -1,17 +1,19 @@
-from PyQt5 import QtWidgets, uic, QtCore
-import pydrs
-from socket import timeout as SocketTimeout
 import sys
-from pemi import __version__ as mod_version
-from .widget.ps import PsInfoWidget
-from .dialog.param import ParamBankDialog
-from .widget.tab import DetachableTabWidget
-from .threads import FetchAddressesThread
-from .util import QVersionLabel, safe_pydrs, show_message
-from pydrs.validation import SerialErrPckgLen
+from socket import timeout as SocketTimeout
+
+import pydrs
 import qtawesome as qta
+from pydrs.validation import SerialErrPckgLen
+from PyQt5 import QtCore, QtWidgets, uic
+
+from pemi import __version__ as mod_version
 
 from .consts import MAIN_UI
+from .dialog.param import ParamBankDialog
+from .threads import FetchAddressesThread
+from .util import QVersionLabel, safe_pydrs, show_message
+from .widget.ps import PsInfoWidget
+from .widget.tab import DetachableTabWidget
 
 
 class Ui(QtWidgets.QMainWindow):
@@ -66,17 +68,17 @@ class Ui(QtWidgets.QMainWindow):
                 self.tabs.widget(i).deleteLater()
                 self.tabs.removeTab(i)
 
-            self.pydrs = pydrs.GenericDRS(self.ipLineEdit.text(), int(self.portLineEdit.text()))                
+            self.pydrs = pydrs.GenericDRS(self.ipLineEdit.text(), int(self.portLineEdit.text()))
             self.menubar.setEnabled(True)
             self.load_done.emit()
 
             if isinstance(self.pydrs, pydrs.EthDRS):
                 self.conTypeLabel.setText("Ethernet")
                 # This breaks EthBridge 2.9 and older
-                #self.pydrs.socket.sendall(b"\x10\x00\x00\x00\x00")
-                #eth_version = self.pydrs.socket.recv(24).decode()[5:].split(":")[0]
+                # self.pydrs.socket.sendall(b"\x10\x00\x00\x00\x00")
+                # eth_version = self.pydrs.socket.recv(24).decode()[5:].split(":")[0]
 
-                #self.ethVersionLabel.setVersionText(f"v{eth_version}")
+                # self.ethVersionLabel.setVersionText(f"v{eth_version}")
             else:
                 self.conTypeLabel.setText("Serial")
 

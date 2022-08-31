@@ -1,6 +1,8 @@
-from pemi import __path__ as mod_path
-from pydrs import __version__ as pydrs_version
 import os
+
+from pydrs import __version__ as pydrs_version
+
+from pemi import __path__ as mod_path
 
 
 def get_abs_ui_path(ui_file: str):

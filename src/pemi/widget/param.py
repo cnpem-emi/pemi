@@ -1,10 +1,10 @@
-from PyQt5 import QtCore, QtWidgets, uic, QtGui
-from ..util import are_parameters_equal, safe_pydrs
-from ..threads import FetchParamThread
-from ..models import DictTableModel
 import qtawesome as qta
+from PyQt5 import QtCore, QtGui, QtWidgets, uic
 
 from ..consts import PARAM_UI
+from ..models import DictTableModel
+from ..threads import FetchParamThread
+from ..util import are_parameters_equal, safe_pydrs
 
 
 class ParamBankWidget(QtWidgets.QWidget):

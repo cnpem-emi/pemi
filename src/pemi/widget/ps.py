@@ -1,16 +1,15 @@
-from PyQt5 import QtCore, QtWidgets, uic
-
-from ..dialog.lock import PasswordDialog
-from ..models import DictTableModel, ListModel
-from ..threads import FetchDataThread, FetchSpecificData
-import qtawesome as qta
 import pyqtgraph as pq  # noqa: F401
+import qtawesome as qta
+from pydrs import __version__ as pydrs_version
+from PyQt5 import QtCore, QtWidgets, uic
 from pyqtgraph import PlotWidget  # noqa: F401
 
 from pemi.util import safe_pydrs
-from ..consts import BASIC_UI
 
-from pydrs import __version__ as pydrs_version
+from ..consts import BASIC_UI
+from ..dialog.lock import PasswordDialog
+from ..models import DictTableModel, ListModel
+from ..threads import FetchDataThread, FetchSpecificData
 
 if int(pydrs_version.split(".")[0]) < 2:
     from pydrs.consts.common_list import list_op_mode as op_modes
@@ -65,6 +64,8 @@ class PsInfoWidget(QtWidgets.QDialog):
         self.setpointButton.clicked.connect(self._set_setpoint)
         self.addVarButton.clicked.connect(self._add_mon_var)
         self.selectPlotButton.clicked.connect(self._set_var_plot)
+        self.layoutOpenButton.clicked.connect(self._open_layout)
+        self.layoutSaveButton.clicked.connect(self._save_layout)
 
         self.slowRefIcon = qta.IconWidget("fa5s.circle")
         self.psLayout.insertWidget(3, self.slowRefIcon)
@@ -114,9 +115,35 @@ class PsInfoWidget(QtWidgets.QDialog):
         self.parent.disable_loading()
 
     @QtCore.pyqtSlot()
-    def _add_mon_var(self):
-        self.varsTable.model().insertRow(0, key=self.selectVarBox.currentText())
+    def _add_mon_var(self, var: str = None):
+        if var is None:
+            var = self.selectVarBox.currentText()
+
+        self.varsTable.model().insertRow(0, key=var)
         self.varsTable.resizeColumnsToContents()
+
+    @QtCore.pyqtSlot()
+    def _save_layout(self):
+        file_dialog = QtWidgets.QFileDialog()
+        file = QtWidgets.QFileDialog.getSaveFileName(file_dialog, "Save Variable List")
+
+        print(file)
+
+        with open(file[0], "w") as var_file:
+            var_file.writelines([f"{var}\n" for var in self.vars.keys()])
+
+    @QtCore.pyqtSlot()
+    def _open_layout(self):
+        file_dialog = QtWidgets.QFileDialog()
+        file = QtWidgets.QFileDialog.getOpenFileName(file_dialog, "Open Variable List")
+
+        self.layoutPathEdit.setText(file[0])
+
+        with open(file[0], "r") as var_file:
+            for var in var_file:
+                var = var.replace("\n", "")
+                if var in self.available_vars:
+                    self._add_mon_var(var)
 
     @QtCore.pyqtSlot(dict)
     def _save_ps_info(self, info: dict):

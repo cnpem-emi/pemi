@@ -1,8 +1,9 @@
 import traceback
-from PyQt5 import QtWidgets, QtCore
 from contextlib import contextmanager
+
 from pydrs.pydrs import BaseDRS
 from pydrs.validation import SerialForbidden
+from PyQt5 import QtCore, QtWidgets
 
 
 class QVersionLabel(QtWidgets.QLabel):
