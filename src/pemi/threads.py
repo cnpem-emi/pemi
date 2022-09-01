@@ -137,7 +137,7 @@ class FetchSpecificData(BasicCommThread):
                     pass
             else:
                 try:
-                    info = getattr(drs, f"read_vars_{self.ps_model.lower()}")()
+                    info = getattr(drs, f"read_vars_{self.ps_model.lower()}")(dt=0)
                     info["mon"] = info[MON_VARS[self.ps_model]]
                 except ZeroDivisionError:
                     pass

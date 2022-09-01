@@ -80,8 +80,9 @@ class PsInfoWidget(QtWidgets.QDialog):
 
     @QtCore.pyqtSlot()
     def load_info(self):
-        self.data_thread.start()
-        self.ps_thread.start()
+        if not any([self.data_thread.isRunning(), self.ps_thread.isRunning()]):
+            self.data_thread.start()
+            self.ps_thread.start()
 
     @QtCore.pyqtSlot(float)
     def _update_interval(self, rate: float):
@@ -192,7 +193,7 @@ class PsInfoWidget(QtWidgets.QDialog):
     def _toggle_loop(self):
         with safe_pydrs(self.pydrs, self.parent.mutex, self.addr) as pydrs:
             if not self.loop:
-                pydrs.closed_loop()
+                pydrs.close_loop()
             else:
                 pydrs.open_loop()
 
