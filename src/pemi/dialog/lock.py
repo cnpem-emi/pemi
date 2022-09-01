@@ -22,7 +22,7 @@ class PasswordDialog(QtWidgets.QDialog):
                 self.parent.pydrs.unlock_udc(password)
             else:
                 self.parent.pydrs.lock_udc(password)
-        except pydrs.validation.SerialInvalidCmd:
+        except (ValueError, pydrs.validation.SerialInvalidCmd):
             show_message("Error", "Invalid password")
 
         self.lock_changed.emit()
