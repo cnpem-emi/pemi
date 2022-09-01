@@ -69,7 +69,6 @@ class Ui(QtWidgets.QMainWindow):
                 self.tabs.removeTab(i)
 
             self.pydrs = pydrs.GenericDRS(self.ipLineEdit.text(), int(self.portLineEdit.text()))
-            self.menubar.setEnabled(True)
             self.load_done.emit()
 
             if isinstance(self.pydrs, pydrs.EthDRS):
@@ -90,6 +89,7 @@ class Ui(QtWidgets.QMainWindow):
             self.addressBox.setEnabled(True)
             self.addressLabel.setEnabled(True)
             self.resetUDCButton.setEnabled(True)
+            self.menubar.setEnabled(True)
         except SocketTimeout:
             show_message("Error", f"Could not connect to {self.ipLineEdit.text()}.")
         except ConnectionRefusedError:
@@ -135,6 +135,11 @@ class Ui(QtWidgets.QMainWindow):
             show_message(
                 "Error", "Eth-Bridge instance is running, but no serial addresses are responding."
             )
+            self.tabs.setEnabled(False)
+            self.addressBox.setEnabled(False)
+            self.addressLabel.setEnabled(False)
+            self.resetUDCButton.setEnabled(False)
+            self.menubar.setEnabled(False)
             return
 
         self.valid_slaves = addrs

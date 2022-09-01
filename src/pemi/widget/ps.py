@@ -12,7 +12,7 @@ from ..models import DictTableModel, ListModel
 from ..threads import FetchDataThread, FetchSpecificData
 
 if int(pydrs_version.split(".")[0]) < 2:
-    from pydrs.consts.common_list import list_op_mode as op_modes
+    from pydrs.consts.common import list_op_mode as op_modes
 else:
     from pydrs.consts.common import op_modes as op_modes
 
