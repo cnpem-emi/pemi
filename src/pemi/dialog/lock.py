@@ -16,8 +16,8 @@ class PasswordDialog(QtWidgets.QDialog):
 
     @QtCore.pyqtSlot()
     def unlock_udc(self):
-        password = int(self.passwordEdit.text(), 10 if self.decRadio.isChecked() else 16)
         try:
+            password = int(self.passwordEdit.text(), 10 if self.decRadio.isChecked() else 16)
             if self.parent.locked:
                 self.parent.pydrs.unlock_udc(password)
             else:
