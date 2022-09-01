@@ -19,7 +19,8 @@ description=""
 dependencies = [
     "pydrs>=1.2.6",
     "qtawesome==1.1.1",
-    "PyQt5==5.15.4"
+    "PyQt5==5.15.4",
+    "pyqtgraph==0.12.4"
 ]
 readme="README.md"
 license = {text = "GPL v3 License"}
