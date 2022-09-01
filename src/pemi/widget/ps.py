@@ -127,8 +127,6 @@ class PsInfoWidget(QtWidgets.QDialog):
         file_dialog = QtWidgets.QFileDialog()
         file = QtWidgets.QFileDialog.getSaveFileName(file_dialog, "Save Variable List")
 
-        print(file)
-
         with open(file[0], "w") as var_file:
             var_file.writelines([f"{var}\n" for var in self.vars.keys()])
 
@@ -149,12 +147,13 @@ class PsInfoWidget(QtWidgets.QDialog):
     def _save_ps_info(self, info: dict):
         if len(info.keys()) != len(self.available_vars):
             self.available_vars = info.keys()
+            valid_vars = list(filter(lambda var: "interlock" not in var, self.available_vars))
 
             self.selectVarBox.clear()
-            self.selectVarBox.addItems(self.available_vars)
+            self.selectVarBox.addItems(valid_vars)
 
             self.selectPlotBox.clear()
-            self.selectPlotBox.addItems(self.available_vars)
+            self.selectPlotBox.addItems(valid_vars)
 
         info = {**{"hard_interlocks": [], "soft_interlocks": [], "alarms": []}, **info}
         self.interlocks = {

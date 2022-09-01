@@ -116,10 +116,12 @@ class ParamBankWidget(QtWidgets.QWidget):
             else:
                 save_func = pydrs.save_param_bank
 
+            self.parent.enable_loading()
             if self.bidCheckbox.isChecked():
                 save_func(1)
             if self.eepromCheckbox.isChecked():
                 save_func(2)
+            self.parent.disable_loading()
 
     @QtCore.pyqtSlot(dict)
     def update_params(self, params):
