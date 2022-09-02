@@ -1,6 +1,6 @@
 import pyqtgraph as pq  # noqa: F401
 import qtawesome as qta
-from pydrs import __version__ as pydrs_version
+from pydrs.consts.common import op_modes as op_modes
 from PyQt5 import QtCore, QtWidgets, uic
 from pyqtgraph import PlotWidget  # noqa: F401
 
@@ -10,11 +10,6 @@ from ..consts import BASIC_UI
 from ..dialog.lock import PasswordDialog
 from ..models import DictTableModel, ListModel
 from ..threads import FetchDataWorker, FetchSpecificWorker
-
-if int(pydrs_version.split(".")[0]) < 2:
-    from pydrs.consts.common import list_op_mode as op_modes
-else:
-    from pydrs.consts.common import op_modes as op_modes
 
 
 class PsInfoWidget(QtWidgets.QDialog):
@@ -64,6 +59,7 @@ class PsInfoWidget(QtWidgets.QDialog):
         self.selectPlotButton.clicked.connect(self._set_var_plot)
         self.layoutOpenButton.clicked.connect(self._open_layout)
         self.layoutSaveButton.clicked.connect(self._save_layout)
+        self.allVarCheckbox.toggled.connect(self._update_iib_get)
 
         self.slowRefIcon = qta.IconWidget("fa5s.circle")
         self.psLayout.insertWidget(3, self.slowRefIcon)
@@ -72,9 +68,17 @@ class PsInfoWidget(QtWidgets.QDialog):
         self.timer.timeout.connect(self.load_info)
         self.timer.start(self.interval)
 
+        if not any(iib_model in self.model for iib_model in ["FBP", "FAC_2P_", "FAP_225A"]):
+            self.allVarCheckbox.setEnabled(True)
+
         self._hard_ilock_model = ListModel()
         self._soft_ilock_model = ListModel()
         self._alarm_model = ListModel()
+
+    @QtCore.pyqtSlot(bool)
+    def _update_iib_get(self, iib: bool):
+        self.available_vars = []
+        self.ps_worker.iib = iib
 
     @QtCore.pyqtSlot()
     def load_info(self):
@@ -144,9 +148,18 @@ class PsInfoWidget(QtWidgets.QDialog):
 
     @QtCore.pyqtSlot(dict)
     def _save_ps_info(self, info: dict):
-        if len(info.keys()) != len(self.available_vars):
+        if not self.available_vars:
             self.available_vars = info.keys()
             valid_vars = list(filter(lambda var: "interlock" not in var, self.available_vars))
+
+            for ps_var, value in info.items():
+                if isinstance(value, dict):
+                    valid_vars.remove(ps_var)
+                    valid_vars += [
+                        f"({ps_var}) {v}"
+                        for v in value.keys()
+                        if not any(name in v for name in ["interlock", "alarm"])
+                    ]
 
             self.selectVarBox.clear()
             self.selectVarBox.addItems(valid_vars)
@@ -166,7 +179,11 @@ class PsInfoWidget(QtWidgets.QDialog):
             self.varsTable.model().setData(var, [info[var]], QtCore.Qt.ItemDataRole)
 
         if self.plot_var:
-            self._update_plot(info[self.plot_var])
+            if self.plot_var[0] == "(":
+                name_split = self.plot_var.split(") ")
+                self._update_plot(info[name_split[0][1:]][name_split[1]])
+            else:
+                self._update_plot(info[self.plot_var])
 
         self.parent.disable_loading()
 
