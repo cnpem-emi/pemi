@@ -86,7 +86,6 @@ class FetchParamWorker(BasicComWorker):
             if self.is_dsp:
                 dsp = {}
                 for key, val in drs.get_dsp_modules_bank(print_modules=False).items():
-                    print(key, val)
                     dsp[key] = val["coeffs"]
                 self.signals.finished.emit(dsp)
             else:
