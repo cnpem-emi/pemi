@@ -11,7 +11,11 @@ if int(pydrs_version.split(".")[0]) < 2:
     import pydrs.consts.fbp as fbp
 
 
-class BasicCommThread(QtCore.QThread):
+class RunnableSignals(QtCore.QObject):
+    finished = QtCore.pyqtSignal(dict)
+
+
+class BasicCommThread(QtCore.QRunnable):
     finished = QtCore.pyqtSignal(dict)
 
     def __init__(self, pydrs: pydrs.BaseDRS, mutex: QtCore.QMutex, addr: int = None):
@@ -19,13 +23,8 @@ class BasicCommThread(QtCore.QThread):
         self.pydrs = pydrs
         self.mutex = mutex
         self.addr = addr
-
-    def __del__(self):
-        self.quit()
-        self.wait()
-
-    def run(self):
-        self.finished.emit()
+        self.signals = RunnableSignals()
+        self.setAutoDelete(False)
 
 
 class FetchDataThread(BasicCommThread):
@@ -37,46 +36,44 @@ class FetchDataThread(BasicCommThread):
             info = drs.read_vars_common()
             info["version"] = drs.read_udc_version()
             info["unlocked"] = drs.read_ps_status()["unlocked"]
-            self.finished.emit(info)
+            self.signals.finished.emit(info)
 
 
 class FetchAddressesThread(BasicCommThread):
-    finished = QtCore.pyqtSignal(list)
-
     def __init__(self, pydrs: pydrs.BaseDRS, mutex: QtCore.QMutex):
         super().__init__(pydrs, mutex)
 
     def run(self):
         with safe_pydrs(self.pydrs, self.mutex, self.addr) as drs:
-            valid_slaves = []
+            valid_slaves = {}
             for i in range(1, 30):
                 drs.slave_addr = i
                 try:
                     drs.read_udc_arm_version()
-                    valid_slaves.append({"addr": i, "name": "Unknown"})
+                    valid_slaves[i] = "Unknown"
                 except validation.SerialErrPckgLen:
                     pass
 
             try:
-                drs.slave_addr = valid_slaves[0]["addr"]
+                drs.slave_addr = list(valid_slaves.keys())[0]
             except IndexError:
-                self.finished.emit([])
+                self.signals.finished.emit({})
                 return
 
             names = drs.get_ps_name().split(" / ")
-            for i in range(0, len(valid_slaves)):
+            for i, addr in enumerate(valid_slaves.keys()):
                 try:
                     if i >= len(names):
-                        drs.slave_addr = valid_slaves[i]["addr"]
+                        drs.slave_addr = addr
                         names += drs.get_ps_name().split(" / ")
 
-                    valid_slaves[i][
-                        "name"
-                    ] = f"{names[i] if names[i] not in names[0:i] else 'Unknown'} ({valid_slaves[i]['addr']})"
+                    valid_slaves[
+                        addr
+                    ] = f"{names[i] if names[i] not in names[0:i] else 'Unknown'} ({addr})"
                 except IndexError:
-                    valid_slaves[i]["name"] += f" ({valid_slaves[i]['addr']})"
+                    valid_slaves[addr] += f" ({addr})"
 
-            self.finished.emit(valid_slaves)
+            self.signals.finished.emit(valid_slaves)
 
 
 class FetchParamThread(BasicCommThread):
@@ -90,9 +87,9 @@ class FetchParamThread(BasicCommThread):
                 dsp = {}
                 for key, val in drs.get_dsp_modules_bank(print_modules=False).items():
                     dsp[key] = val["coeffs"]
-                self.finished.emit(dsp)
+                self.signals.finished.emit(dsp)
             else:
-                self.finished.emit(drs.get_param_bank(print_modules=False))
+                self.signals.finished.emit(drs.get_param_bank(print_modules=False))
 
 
 class FetchSpecificData(BasicCommThread):
@@ -142,4 +139,4 @@ class FetchSpecificData(BasicCommThread):
                 except ZeroDivisionError:
                     pass
 
-            self.finished.emit(info)
+            self.signals.finished.emit(info)

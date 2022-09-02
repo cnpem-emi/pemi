@@ -33,13 +33,11 @@ class PsInfoWidget(QtWidgets.QDialog):
 
         self.varsTable.setModel(DictTableModel(self.vars, row_count=1))
 
-        self.data_thread = FetchDataThread(self.parent.pydrs, self.parent.mutex, self.addr)
-        self.data_thread.finished.connect(self._save_common_info)
-        self.data_thread.started.connect(self.parent.enable_loading)
+        self.data_worker = FetchDataThread(self.parent.pydrs, self.parent.mutex, self.addr)
+        self.data_worker.signals.finished.connect(self._save_common_info)
 
-        self.ps_thread = FetchSpecificData(self.parent.pydrs, self.parent.mutex, self.addr)
-        self.ps_thread.finished.connect(self._save_ps_info)
-        self.ps_thread.started.connect(self.parent.enable_loading)
+        self.ps_worker = FetchSpecificData(self.parent.pydrs, self.parent.mutex, self.addr)
+        self.ps_worker.signals.finished.connect(self._save_ps_info)
 
         with safe_pydrs(self.pydrs, self.parent.mutex, self.addr) as pydrs:
             info = pydrs.read_vars_common()
@@ -47,7 +45,7 @@ class PsInfoWidget(QtWidgets.QDialog):
             set_vals = info["setpoint"].split(" ")
             self.setpointBox.setValue(float(set_vals[0]))
             self.setpointBox.setSuffix(" " + set_vals[1])
-            self.ps_thread.ps_model = self.model
+            self.ps_worker.ps_model = self.model
 
         self.locked = False
         self.pass_dialog = PasswordDialog(self)
@@ -80,9 +78,8 @@ class PsInfoWidget(QtWidgets.QDialog):
 
     @QtCore.pyqtSlot()
     def load_info(self):
-        if not any([self.data_thread.isRunning(), self.ps_thread.isRunning()]):
-            self.data_thread.start()
-            self.ps_thread.start()
+        QtCore.QThreadPool.globalInstance().start(self.data_worker)
+        QtCore.QThreadPool.globalInstance().start(self.ps_worker)
 
     @QtCore.pyqtSlot(float)
     def _update_interval(self, rate: float):
@@ -95,10 +92,11 @@ class PsInfoWidget(QtWidgets.QDialog):
         self.plot_var_values.clear()
 
     def _update_plot(self, value: float):
+        self.plotWidget.clear()
         self.plot_var_values.append(float(value.split(" ")[0]))
 
         if len(self.plot_var_values) >= self.pointsBox.value():
-            self.plot_var_values.pop(0)
+            del self.plot_var_values[0]
 
         self.plotWidget.plot(self.plot_var_values, clear=True)
 

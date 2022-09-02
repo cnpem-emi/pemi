@@ -14,7 +14,14 @@ class ParamBankWidget(QtWidgets.QWidget):
         self.parent = parent
         self.dsp = dsp
         self.addr = addr
-        self.data_thread: FetchParamThread = None
+        self.data_worker = FetchParamThread(
+            self.parent.pydrs, self.parent.mutex, self.addr, self.dsp
+        )
+
+        self.refreshButton.clicked.connect(
+            QtCore.QThreadPool.globalInstance().start(self.data_worker)
+        )
+        self.data_worker.signals.finished.connect(self.update_params)
 
         self.openParamBankButton.clicked.connect(self._show_dialog)
         self.clearPBankButton.clicked.connect(self._clear_file)
@@ -144,16 +151,6 @@ class ParamBankWidget(QtWidgets.QWidget):
                 pydrs.load_param_bank(mem_type)
             else:
                 pydrs.load_dsp_modules_eeprom(mem_type)
-
-    @QtCore.pyqtSlot()
-    def get_parent_info(self):
-        self.data_thread = FetchParamThread(
-            self.parent.pydrs, self.parent.mutex, self.addr, self.dsp
-        )
-
-        self.refreshButton.clicked.connect(self.data_thread.start)
-        self.data_thread.start()
-        self.data_thread.finished.connect(self.update_params)
 
     def set_icons(self):
         self.saveFileButton.setIcon(qta.icon("fa5s.save"))

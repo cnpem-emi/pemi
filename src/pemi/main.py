@@ -48,7 +48,7 @@ class Ui(QtWidgets.QMainWindow):
         self.addressBox.currentIndexChanged.connect(self._switch_address)
         self.actionParams.triggered.connect(self._open_param_dialog)
 
-        self.valid_slaves = []
+        self.valid_slaves = {}
 
         self.resetUDCButton.setEnabled(False)
         self.addressBox.setEnabled(False)
@@ -65,7 +65,7 @@ class Ui(QtWidgets.QMainWindow):
 
         try:
             for i in range(0, self.tabs.count()):
-                self.tabs.widget(i).deleteLater()
+                # self.tabs.widget(i).deleteLater()
                 self.tabs.removeTab(i)
 
             self.pydrs = pydrs.GenericDRS(self.ipLineEdit.text(), int(self.portLineEdit.text()))
@@ -81,9 +81,9 @@ class Ui(QtWidgets.QMainWindow):
             else:
                 self.conTypeLabel.setText("Serial")
 
-            self.addresses_thread = FetchAddressesThread(self.pydrs, self.mutex)
-            self.addresses_thread.finished.connect(self._save_addresses)
-            self.addresses_thread.start()
+            self.addresses_worker = FetchAddressesThread(self.pydrs, self.mutex)
+            self.addresses_worker.signals.finished.connect(self._save_addresses)
+            QtCore.QThreadPool.globalInstance().start(self.addresses_worker)
 
             self.tabs.setEnabled(True)
             self.addressBox.setEnabled(True)
@@ -118,7 +118,7 @@ class Ui(QtWidgets.QMainWindow):
             )
             == QtWidgets.QMessageBox.Ok
         ):
-            with safe_pydrs(self.pydrs, self.mutex, self.valid_slaves[0]["addr"]) as pydrs:
+            with safe_pydrs(self.pydrs, self.mutex, list(self.valid_slaves.keys())[0]) as pydrs:
                 try:
                     pydrs.reset_udc(confirm=False)
                 except SerialErrPckgLen:
@@ -126,11 +126,11 @@ class Ui(QtWidgets.QMainWindow):
 
     @QtCore.pyqtSlot(int)
     def _close_tab(self, index: int):
-        self.tabs.widget(index).deleteLater()
+        # self.tabs.widget(index).deleteLater()
         self.tabs.removeTab(index)
 
-    @QtCore.pyqtSlot(list)
-    def _save_addresses(self, addrs: list):
+    @QtCore.pyqtSlot(dict)
+    def _save_addresses(self, addrs: dict):
         if not addrs:
             show_message(
                 "Error", "Eth-Bridge instance is running, but no serial addresses are responding."
@@ -144,18 +144,18 @@ class Ui(QtWidgets.QMainWindow):
 
         self.valid_slaves = addrs
         self.addressBox.clear()
-        self.addressBox.addItems([v["name"] for v in addrs])
-        self.addrs_updated.emit(addrs)
+        self.addressBox.addItems([v for v in addrs.values()])
+        self.addrs_updated.emit(list(addrs.keys()))
 
     @QtCore.pyqtSlot(int)
     def _switch_address(self, index: int):
-        addr = self.valid_slaves[index]["addr"]
+        addr = list(self.valid_slaves.keys())[index]
         for i in range(0, self.tabs.count()):
             if addr == self.tabs.widget(i).addr:
                 return
 
         new_window = PsInfoWidget(self, addr)
-        self.tabs.addTab(new_window, self.valid_slaves[index]["name"])
+        self.tabs.addTab(new_window, list(self.valid_slaves.values())[index])
         self.ps_changed.emit()
 
     def _set_tabs(self):
