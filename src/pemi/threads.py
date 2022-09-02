@@ -15,7 +15,7 @@ class RunnableSignals(QtCore.QObject):
     finished = QtCore.pyqtSignal(dict)
 
 
-class BasicCommThread(QtCore.QRunnable):
+class BasicComWorker(QtCore.QRunnable):
     finished = QtCore.pyqtSignal(dict)
 
     def __init__(self, pydrs: pydrs.BaseDRS, mutex: QtCore.QMutex, addr: int = None):
@@ -27,7 +27,7 @@ class BasicCommThread(QtCore.QRunnable):
         self.setAutoDelete(False)
 
 
-class FetchDataThread(BasicCommThread):
+class FetchDataWorker(BasicComWorker):
     def __init__(self, pydrs: pydrs.BaseDRS, mutex: QtCore.QMutex, addr: int):
         super().__init__(pydrs, mutex, addr)
 
@@ -39,7 +39,7 @@ class FetchDataThread(BasicCommThread):
             self.signals.finished.emit(info)
 
 
-class FetchAddressesThread(BasicCommThread):
+class FetchAddressesWorker(BasicComWorker):
     def __init__(self, pydrs: pydrs.BaseDRS, mutex: QtCore.QMutex):
         super().__init__(pydrs, mutex)
 
@@ -76,7 +76,7 @@ class FetchAddressesThread(BasicCommThread):
             self.signals.finished.emit(valid_slaves)
 
 
-class FetchParamThread(BasicCommThread):
+class FetchParamWorker(BasicComWorker):
     def __init__(self, pydrs: pydrs.BaseDRS, mutex: QtCore.QMutex, addr: int, is_dsp: bool):
         super().__init__(pydrs, mutex, addr)
         self.is_dsp = is_dsp
@@ -86,13 +86,14 @@ class FetchParamThread(BasicCommThread):
             if self.is_dsp:
                 dsp = {}
                 for key, val in drs.get_dsp_modules_bank(print_modules=False).items():
+                    print(key, val)
                     dsp[key] = val["coeffs"]
                 self.signals.finished.emit(dsp)
             else:
                 self.signals.finished.emit(drs.get_param_bank(print_modules=False))
 
 
-class FetchSpecificData(BasicCommThread):
+class FetchSpecificWorker(BasicComWorker):
     def __init__(self, pydrs: pydrs.BaseDRS, mutex: QtCore.QMutex, addr: int, ps_model="FBP"):
         super().__init__(pydrs, mutex, addr)
         self.ps_model = ps_model
@@ -134,7 +135,7 @@ class FetchSpecificData(BasicCommThread):
                     pass
             else:
                 try:
-                    info = getattr(drs, f"read_vars_{self.ps_model.lower()}")(dt=0)
+                    info = getattr(drs, f"read_vars_{self.ps_model.lower()}")()
                     info["mon"] = info[MON_VARS[self.ps_model]]
                 except ZeroDivisionError:
                     pass

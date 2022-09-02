@@ -9,7 +9,7 @@ from pemi.util import safe_pydrs
 from ..consts import BASIC_UI
 from ..dialog.lock import PasswordDialog
 from ..models import DictTableModel, ListModel
-from ..threads import FetchDataThread, FetchSpecificData
+from ..threads import FetchDataWorker, FetchSpecificWorker
 
 if int(pydrs_version.split(".")[0]) < 2:
     from pydrs.consts.common import list_op_mode as op_modes
@@ -33,10 +33,10 @@ class PsInfoWidget(QtWidgets.QDialog):
 
         self.varsTable.setModel(DictTableModel(self.vars, row_count=1))
 
-        self.data_worker = FetchDataThread(self.parent.pydrs, self.parent.mutex, self.addr)
+        self.data_worker = FetchDataWorker(self.parent.pydrs, self.parent.mutex, self.addr)
         self.data_worker.signals.finished.connect(self._save_common_info)
 
-        self.ps_worker = FetchSpecificData(self.parent.pydrs, self.parent.mutex, self.addr)
+        self.ps_worker = FetchSpecificWorker(self.parent.pydrs, self.parent.mutex, self.addr)
         self.ps_worker.signals.finished.connect(self._save_ps_info)
 
         with safe_pydrs(self.pydrs, self.parent.mutex, self.addr) as pydrs:

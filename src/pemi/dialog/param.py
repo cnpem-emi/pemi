@@ -10,9 +10,9 @@ class ParamBankDialog(QtWidgets.QDialog):
         uic.loadUi(PARAM_DIALOG_UI, self)
         self.parent = parent
 
-        self.param_bank_tab = ParamBankWidget(self.parent, self.parent.valid_slaves[0]["addr"])
+        self.param_bank_tab = ParamBankWidget(self.parent, list(self.parent.valid_slaves.keys())[0])
         self.dsp_bank_tab = ParamBankWidget(
-            self.parent, self.parent.valid_slaves[0]["addr"], dsp=True
+            self.parent, list(self.parent.valid_slaves.keys())[0], dsp=True
         )
 
         self.tabs.addTab(self.param_bank_tab, "Parameter Bank")

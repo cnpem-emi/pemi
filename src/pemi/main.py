@@ -10,7 +10,7 @@ from pemi import __version__ as mod_version
 
 from .consts import MAIN_UI
 from .dialog.param import ParamBankDialog
-from .threads import FetchAddressesThread
+from .threads import FetchAddressesWorker
 from .util import QVersionLabel, safe_pydrs, show_message
 from .widget.ps import PsInfoWidget
 from .widget.tab import DetachableTabWidget
@@ -27,7 +27,7 @@ class Ui(QtWidgets.QMainWindow):
         self._set_tabs()
         self.connectButton.clicked.connect(self.connect)
         self.pydrs: pydrs.BaseDRS = None
-        self.addresses_thread: FetchAddressesThread = None
+        self.addresses_thread: FetchAddressesWorker = None
 
         self.pydrsVersionLabel = QVersionLabel(self, "PyDRS")
         self.uiVersionLabel = QVersionLabel(self, "UI")
@@ -81,7 +81,7 @@ class Ui(QtWidgets.QMainWindow):
             else:
                 self.conTypeLabel.setText("Serial")
 
-            self.addresses_worker = FetchAddressesThread(self.pydrs, self.mutex)
+            self.addresses_worker = FetchAddressesWorker(self.pydrs, self.mutex)
             self.addresses_worker.signals.finished.connect(self._save_addresses)
             QtCore.QThreadPool.globalInstance().start(self.addresses_worker)
 

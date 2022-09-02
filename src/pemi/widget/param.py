@@ -3,7 +3,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets, uic
 
 from ..consts import PARAM_UI
 from ..models import DictTableModel
-from ..threads import FetchParamThread
+from ..threads import FetchParamWorker
 from ..util import are_parameters_equal, safe_pydrs
 
 
@@ -14,13 +14,11 @@ class ParamBankWidget(QtWidgets.QWidget):
         self.parent = parent
         self.dsp = dsp
         self.addr = addr
-        self.data_worker = FetchParamThread(
+        self.data_worker = FetchParamWorker(
             self.parent.pydrs, self.parent.mutex, self.addr, self.dsp
         )
 
-        self.refreshButton.clicked.connect(
-            QtCore.QThreadPool.globalInstance().start(self.data_worker)
-        )
+        self.refreshButton.clicked.connect(self._refresh_data)
         self.data_worker.signals.finished.connect(self.update_params)
 
         self.openParamBankButton.clicked.connect(self._show_dialog)
@@ -37,10 +35,13 @@ class ParamBankWidget(QtWidgets.QWidget):
         self.loadButton.setEnabled(False)
         self.editButton.setEnabled(False)
 
-        self.get_parent_info()
+        self._refresh_data()
         self.set_icons()
 
         self.read_params = []
+
+    def _refresh_data(self):
+        QtCore.QThreadPool.globalInstance().start(self.data_worker)
 
     @property
     def param_file_path(self) -> str:
