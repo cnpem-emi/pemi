@@ -1,7 +1,5 @@
 import os
 
-from pydrs import __version__ as pydrs_version
-
 from pemi import __path__ as mod_path
 
 
@@ -10,43 +8,22 @@ def get_abs_ui_path(ui_file: str):
 
 
 MON_VARS = {
-    "FBP": "load_current",
-    "FBP_DCLink": "dclink_voltage",
-    "FAP": "load_current",
-    "FAP_4P": "mean_load_current",
-    "FAP_2P2S": "mean_load_current",
+    "FBP": "i_load",
+    "FBP_DCLink": "v_out",
+    "FAP": "i_load_mean",
+    "FAP_4P": "i_load_mean",
+    "FAP_2P2S": "i_load_mean",
     "FAP_225A": "load_current",
-    "FAC_ACDC": "cap_bank_voltage",
-    "FAC_DCDC": "load_current",
-    "FAC_DCDC_EMA": "load_current",
-    "FAC_2S_ACDC": "recitifier_current",
-    "FAC_2S_DCDC": "load_current",
-    "FAC_2P4S_ACDC": "cap_bank_voltage",
-    "FAC_2P4S_DCDC": "load_current",
-    "FAC_2P_ACDC_IMAS": "cap_bank_voltage",
-    "FAC_2P_DCDC_IMAS": "load_current",
+    "FAC_ACDC": "v_capacitor_bank",
+    "FAC_DCDC": "i_load_mean",
+    "FAC_DCDC_EMA": "i_load",
+    "FAC_2S_ACDC": "i_out_rectifier",
+    "FAC_2S_DCDC": "i_load_mean",
+    "FAC_2P4S_ACDC": "v_capacitor_bank",
+    "FAC_2P4S_DCDC": "i_load_mean",
+    "FAC_2P_ACDC_IMAS": "v_capacitor_bank",
+    "FAC_2P_DCDC_IMAS": "i_load",
 }
-
-
-if int(pydrs_version.split(".")[0]) < 2:
-    MON_VARS = {
-        "FBP": {"id": 33, "egu": "A"},
-        "FBP_DCLink": {"id": 34, "egu": "V"},
-        "FAP": {"id": 33, "egu": "A"},
-        "FAP_4P": {"id": 33, "egu": "A"},
-        "FAP_2P2S": {"id": 33, "egu": "A"},
-        "FAP_225A": {"id": 33, "egu": "A"},
-        "FAC_ACDC": {"id": 33, "egu": "V"},
-        "FAC_DCDC": {"id": 33, "egu": "A"},
-        "FAC_DCDC_EMA": {"id": 33, "egu": "A"},
-        "FAC_2S_ACDC": {"id": 33, "egu": "V"},
-        "FAC_2S_DCDC": {"id": 33, "egu": "A"},
-        "FAC_2P4S_ACDC": {"id": 33, "egu": "V"},
-        "FAC_2P4S_DCDC": {"id": 33, "egu": "A"},
-        "FAC_2P_ACDC_IMAS": {"id": 34, "egu": "A"},
-        "FAC_2P_DCDC_IMAS": {"id": 33, "egu": "A"},
-    }
-
 
 BASIC_UI = get_abs_ui_path("basic.ui")
 LOCK_UI = get_abs_ui_path("lock.ui")

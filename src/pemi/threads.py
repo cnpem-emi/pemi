@@ -24,12 +24,21 @@ class BasicComWorker(QtCore.QRunnable):
 class FetchDataWorker(BasicComWorker):
     def __init__(self, pydrs: pydrs.BaseDRS, mutex: QtCore.QMutex, addr: int):
         super().__init__(pydrs, mutex, addr)
+        self.ps_model = "FBP"
+        self.iib = False
 
     def run(self):
         with safe_pydrs(self.pydrs, self.mutex, self.addr) as drs:
-            info = drs.read_vars_common()
-            info["version"] = drs.read_udc_version()
-            info["unlocked"] = drs.read_ps_status()["unlocked"]
+            info = {"mon": "Unknown", "soft_interlocks": [], "hard_interlocks": []}
+            try:
+                if self.iib:
+                    info = getattr(drs, f"read_vars_{self.ps_model.lower()}")(iib=1)
+                else:
+                    info = getattr(drs, f"read_vars_{self.ps_model.lower()}")()
+                info["mon"] = info[MON_VARS[self.ps_model]]
+            except ZeroDivisionError:
+                pass
+
             self.signals.finished.emit(info)
 
 
@@ -43,7 +52,7 @@ class FetchAddressesWorker(BasicComWorker):
             for i in range(1, 30):
                 drs.slave_addr = i
                 try:
-                    drs.read_udc_arm_version()
+                    drs.read_vars_common()
                     valid_slaves[i] = "Unknown"
                 except validation.SerialErrPckgLen:
                     pass
@@ -84,24 +93,3 @@ class FetchParamWorker(BasicComWorker):
                 self.signals.finished.emit(dsp)
             else:
                 self.signals.finished.emit(drs.get_param_bank(print_modules=False))
-
-
-class FetchSpecificWorker(BasicComWorker):
-    def __init__(self, pydrs: pydrs.BaseDRS, mutex: QtCore.QMutex, addr: int, ps_model="FBP"):
-        super().__init__(pydrs, mutex, addr)
-        self.ps_model = ps_model
-        self.iib = False
-
-    def run(self):
-        with safe_pydrs(self.pydrs, self.mutex, self.addr) as drs:
-            info = {"mon": "Unknown", "soft_interlocks": [], "hard_interlocks": []}
-            try:
-                if self.iib:
-                    info = getattr(drs, f"read_vars_{self.ps_model.lower()}")(iib=1)
-                else:
-                    info = getattr(drs, f"read_vars_{self.ps_model.lower()}")()
-                info["mon"] = info[MON_VARS[self.ps_model]]
-            except ZeroDivisionError:
-                pass
-
-            self.signals.finished.emit(info)

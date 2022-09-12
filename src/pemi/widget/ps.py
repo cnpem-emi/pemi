@@ -9,7 +9,7 @@ from pemi.util import safe_pydrs
 from ..consts import BASIC_UI
 from ..dialog.lock import PasswordDialog
 from ..models import DictTableModel, ListModel
-from ..threads import FetchDataWorker, FetchSpecificWorker
+from ..threads import FetchDataWorker
 
 
 class PsInfoWidget(QtWidgets.QDialog):
@@ -31,16 +31,13 @@ class PsInfoWidget(QtWidgets.QDialog):
         self.data_worker = FetchDataWorker(self.parent.pydrs, self.parent.mutex, self.addr)
         self.data_worker.signals.finished.connect(self._save_common_info)
 
-        self.ps_worker = FetchSpecificWorker(self.parent.pydrs, self.parent.mutex, self.addr)
-        self.ps_worker.signals.finished.connect(self._save_ps_info)
-
         with safe_pydrs(self.pydrs, self.parent.mutex, self.addr) as pydrs:
             info = pydrs.read_vars_common()
-            self.model = info["ps_model"]
-            set_vals = info["setpoint"].split(" ")
+            self.model = info["status"]["model"]
+            set_vals = info["ps_setpoint"].split(" ")
             self.setpointBox.setValue(float(set_vals[0]))
             self.setpointBox.setSuffix(" " + set_vals[1])
-            self.ps_worker.ps_model = self.model
+            self.data_worker.ps_model = self.model
 
         self.locked = False
         self.pass_dialog = PasswordDialog(self)
@@ -78,12 +75,11 @@ class PsInfoWidget(QtWidgets.QDialog):
     @QtCore.pyqtSlot(bool)
     def _update_iib_get(self, iib: bool):
         self.available_vars = []
-        self.ps_worker.iib = iib
+        self.data_worker.iib = iib
 
     @QtCore.pyqtSlot()
     def load_info(self):
         QtCore.QThreadPool.globalInstance().start(self.data_worker)
-        QtCore.QThreadPool.globalInstance().start(self.ps_worker)
 
     @QtCore.pyqtSlot(float)
     def _update_interval(self, rate: float):
@@ -106,15 +102,44 @@ class PsInfoWidget(QtWidgets.QDialog):
 
     @QtCore.pyqtSlot(dict)
     def _save_common_info(self, info: dict):
-        self.model = info["ps_model"]
-        self.state = info["state"]
-        self.loop = info["loop_state"] == "Closed Loop"
-        self.locked = not info["unlocked"]
-        self.refLabel.setText(info["reference"])
-        self.readbackLabel.setText(info["setpoint"])
+        self.model = info["status"]["model"]
+        self.state = info["status"]["state"]
+        self.loop = info["status"]["open_loop"] == 1
+        self.locked = not info["status"]["unlocked"]
+        self.refLabel.setText(info["ps_reference"])
+        self.readbackLabel.setText(info["ps_setpoint"])
         self.power = op_modes.index(self.state) > 2
-        self.armVerLabel.setText(info["version"]["arm"])
-        self.dspVerLabel.setText(info["version"]["c28"])
+        self.armVerLabel.setText(info["version"]["udc_arm"])
+        self.dspVerLabel.setText(info["version"]["udc_c28"])
+
+        if not self.available_vars:
+            self.available_vars = info.keys()
+            valid_vars = list(filter(lambda var: "interlock" not in var, self.available_vars))
+
+            self.selectVarBox.clear()
+            self.selectVarBox.addItems(valid_vars)
+
+            self.selectPlotBox.clear()
+            self.selectPlotBox.addItems(valid_vars)
+
+        info = {**{"hard_interlocks": [], "soft_interlocks": [], "alarms": []}, **info}
+        self.interlocks = {
+            "hard": info["hard_interlocks"],
+            "soft": info["soft_interlocks"],
+            "alarms": info["alarms"],
+        }
+        self.monLabel.setText(info["mon"])
+
+        for var in self.vars:
+            self.varsTable.model().setData(var, [info[var]], QtCore.Qt.ItemDataRole)
+
+        if self.plot_var:
+            if self.plot_var[0] == "(":
+                name_split = self.plot_var.split(") ")
+                self._update_plot(info[name_split[0][1:]][name_split[1]])
+            else:
+                self._update_plot(info[self.plot_var])
+
         self.parent.disable_loading()
 
     @QtCore.pyqtSlot()
@@ -145,47 +170,6 @@ class PsInfoWidget(QtWidgets.QDialog):
                 var = var.replace("\n", "")
                 if var in self.available_vars:
                     self._add_mon_var(var)
-
-    @QtCore.pyqtSlot(dict)
-    def _save_ps_info(self, info: dict):
-        if not self.available_vars:
-            self.available_vars = info.keys()
-            valid_vars = list(filter(lambda var: "interlock" not in var, self.available_vars))
-
-            for ps_var, value in info.items():
-                if isinstance(value, dict):
-                    valid_vars.remove(ps_var)
-                    valid_vars += [
-                        f"({ps_var}) {v}"
-                        for v in value.keys()
-                        if not any(name in v for name in ["interlock", "alarm"])
-                    ]
-
-            self.selectVarBox.clear()
-            self.selectVarBox.addItems(valid_vars)
-
-            self.selectPlotBox.clear()
-            self.selectPlotBox.addItems(valid_vars)
-
-        info = {**{"hard_interlocks": [], "soft_interlocks": [], "alarms": []}, **info}
-        self.interlocks = {
-            "hard": info["hard_interlocks"],
-            "soft": info["soft_interlocks"],
-            "alarms": info["alarms"],
-        }
-        self.monLabel.setText(info["mon"])
-
-        for var in self.vars:
-            self.varsTable.model().setData(var, [info[var]], QtCore.Qt.ItemDataRole)
-
-        if self.plot_var:
-            if self.plot_var[0] == "(":
-                name_split = self.plot_var.split(") ")
-                self._update_plot(info[name_split[0][1:]][name_split[1]])
-            else:
-                self._update_plot(info[self.plot_var])
-
-        self.parent.disable_loading()
 
     @QtCore.pyqtSlot()
     def _reset_ilocks(self):
