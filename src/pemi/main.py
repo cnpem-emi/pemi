@@ -120,7 +120,7 @@ class Ui(QtWidgets.QMainWindow):
         ):
             with safe_pydrs(self.pydrs, self.mutex, list(self.valid_slaves.keys())[0]) as pydrs:
                 try:
-                    pydrs.reset_udc(confirm=False)
+                    pydrs.reset_udc()
                 except SerialErrPckgLen:
                     pass
 
