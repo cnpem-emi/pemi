@@ -31,10 +31,7 @@ class FetchDataWorker(BasicComWorker):
         with safe_pydrs(self.pydrs, self.mutex, self.addr) as drs:
             info = {"mon": "Unknown", "soft_interlocks": [], "hard_interlocks": []}
             try:
-                if self.iib:
-                    info = getattr(drs, f"read_vars_{self.ps_model.lower()}")(iib=1)
-                else:
-                    info = getattr(drs, f"read_vars_{self.ps_model.lower()}")()
+                info = getattr(drs, f"read_vars_{self.ps_model.lower()}")()
                 info["mon"] = info[MON_VARS[self.ps_model]]
             except ZeroDivisionError:
                 pass
@@ -88,8 +85,8 @@ class FetchParamWorker(BasicComWorker):
         with safe_pydrs(self.pydrs, self.mutex, self.addr) as drs:
             if self.is_dsp:
                 dsp = {}
-                for key, val in drs.get_dsp_modules_bank(print_modules=False).items():
+                for key, val in drs.get_dsp_modules_bank().items():
                     dsp[key] = val["coeffs"]
                 self.signals.finished.emit(dsp)
             else:
-                self.signals.finished.emit(drs.get_param_bank(print_modules=False))
+                self.signals.finished.emit(drs.get_param_bank())
