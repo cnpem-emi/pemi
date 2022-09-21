@@ -244,7 +244,7 @@ class PsInfoWidget(QtWidgets.QDialog):
 
     @loop.setter
     def loop(self, closed: bool):
-        self._loop = closed
+        self._loop = not closed
 
         self.loopLabel.setText("CLOSED" if closed else "OPEN")
         self.loopLabel.setStyleSheet(f"color: {'green' if closed else 'red'}")
