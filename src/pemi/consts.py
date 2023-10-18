@@ -23,6 +23,7 @@ MON_VARS = {
     "FAC_2P4S_DCDC": "i_load_mean",
     "FAC_2P_ACDC_IMAS": "v_capacitor_bank",
     "FAC_2P_DCDC_IMAS": "i_load",
+    "SWLS_RESONANT_CONVERTER": "i_load_mean",
 }
 
 BASIC_UI = get_abs_ui_path("basic.ui")

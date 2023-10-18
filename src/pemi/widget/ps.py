@@ -114,7 +114,7 @@ class PsInfoWidget(QtWidgets.QDialog):
 
         if not self.available_vars:
             self.available_vars = info.keys()
-            valid_vars = list(filter(lambda var: "interlock" not in var, self.available_vars))
+            # valid_vars = list(filter(lambda var: "interlock" not in var, self.available_vars))
 
             self.selectVarBox.clear()
             self.selectVarBox.addItems(valid_vars)
@@ -207,7 +207,7 @@ class PsInfoWidget(QtWidgets.QDialog):
     def locked(self, lock: bool):
         self._locked = lock
 
-        lock_icon = qta.icon("fa5s.lock") if not lock else qta.icon("fa5s.lock-open")
+        lock_icon = qta.icon("fa5s.lock-open") if not lock else qta.icon("fa5s.lock")
         self.lockLabel.setText("Locked" if lock else "Unlocked")
         self.loopButton.setEnabled(not lock)
         self.lockButton.setIcon(lock_icon)
@@ -246,9 +246,9 @@ class PsInfoWidget(QtWidgets.QDialog):
     def loop(self, closed: bool):
         self._loop = not closed
 
-        self.loopLabel.setText("CLOSED" if closed else "OPEN")
-        self.loopLabel.setStyleSheet(f"color: {'green' if closed else 'red'}")
-        self.loopButton.setText("Open" if closed else "Close")
+        self.loopLabel.setText("OPEN" if closed else "CLOSED")
+        self.loopLabel.setStyleSheet(f"color: {'red' if closed else 'green'}")
+        self.loopButton.setText("Close" if closed else "Open")
 
     @property
     def model(self) -> str:
