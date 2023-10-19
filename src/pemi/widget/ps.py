@@ -115,7 +115,7 @@ class PsInfoWidget(QtWidgets.QDialog):
         if not self.available_vars:
             self.available_vars = info.keys()
             # valid_vars = list(filter(lambda var: "interlock" not in var, self.available_vars))
-
+            valid_vars = self.available_vars 
             self.selectVarBox.clear()
             self.selectVarBox.addItems(valid_vars)
 
