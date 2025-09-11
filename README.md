@@ -5,7 +5,7 @@
 PEMI is a basic graphical interface for PyDRS made with Qt, aiming to provide core PyDRS functionalities in an easy to navigate manner.
 
 ## Requirements
-- Python 3.6 or newer
+- Python 3.12.10 or newer
 
 ## Usage
 

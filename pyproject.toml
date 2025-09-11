@@ -1,10 +1,10 @@
 [tool.black]
 line-length = 100
-target-version = ['py39']
+target-version = ['py312']
 include = '\.pyi?$'
 
 [build-system]
-requires = ["setuptools>=40.8.0"]
+requires = ["setuptools>=80.7.1"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -17,14 +17,14 @@ classifiers=[
 ]
 description=""
 dependencies = [
-    "pydrs>=1.2.6",
-    "qtawesome==1.1.1",
-    "PyQt5==5.15.4",
-    "pyqtgraph==0.12.4"
+    "pydrs>=2.3.3",
+    "qtawesome==1.4.0",
+    "PyQt5==5.15.11",
+    "pyqtgraph==0.13.7"
 ]
 readme="README.md"
 license = {text = "GPL v3 License"}
-requires-python=">=3.6"
+requires-python=">=3.12.10"
 dynamic=["version"]
 
 [tool.setuptools]
@@ -39,8 +39,8 @@ version = {attr = "pemi.__version__"}
 
 [project.optional-dependencies]
 dev = [
-    "pytest==7.1.2"
+    "pytest==8.3.5"
 ]
 windows = [
-    "pyinstaller==5.3"
+    "pyinstaller==6.13.0"
 ]
